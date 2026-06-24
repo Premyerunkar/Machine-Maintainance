@@ -1,0 +1,25 @@
+<div class="page active" id="page-login">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="logo-icon">
+        <img src="/assets/itsmLogo.png" alt="img-logo">
+      </div>
+      <h1>Khetan Packfine PVT LTD</h1>
+      <p>Machine Maintenance Tracking Portal</p>
+    </div>
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="switchLoginTab('user')">User Login</button>
+      <button class="login-tab" onclick="switchLoginTab('admin')">Admin Login</button>
+    </div>
+    <div id="login-form-user">
+      <div class="form-group"><label>Username</label><input type="text" id="user-username" placeholder="Enter Username"/></div>
+      <div class="form-group"><label>Password</label><input type="password" id="user-password" placeholder="••••••••"/></div>
+      <button class="btn btn-primary" id="btn-login-user" onclick="doLogin('user')">Sign In as User</button>
+    </div>
+    <div id="login-form-admin" style="display:none">
+      <div class="form-group"><label>Admin Username</label><input type="text" id="admin-username" placeholder="admin"/></div>
+      <div class="form-group"><label>Password</label><input type="password" id="admin-password" placeholder="••••••••"/></div>
+      <button class="btn btn-primary" id="btn-login-admin" onclick="doLogin('admin')">Sign In as Admin</button>
+    </div>
+    </div>
+</div>

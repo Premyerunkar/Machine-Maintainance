@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beautiful Login Page</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background: linear-gradient(-45deg, #6a11cb, #2575fc, #ff6b6b, #ffb347);
+    background-size:400% 400%;
+    animation: gradientBG 12s ease infinite;
+    overflow:hidden;
+}
+
+@keyframes gradientBG{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+
+.login-container{
+    width:380px;
+    padding:40px;
+    border-radius:25px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border:1px solid rgba(255,255,255,0.2);
+    box-shadow:0 15px 35px rgba(0,0,0,0.2);
+    color:white;
+}
+
+.login-container h2{
+    text-align:center;
+    margin-bottom:30px;
+    font-size:32px;
+    font-weight:700;
+}
+
+.input-group{
+    margin-bottom:20px;
+}
+
+.input-group label{
+    display:block;
+    margin-bottom:8px;
+    font-size:14px;
+}
+
+.input-group input{
+    width:100%;
+    padding:14px;
+    border:none;
+    outline:none;
+    border-radius:12px;
+    background:rgba(255,255,255,0.2);
+    color:white;
+    font-size:16px;
+}
+
+.input-group input::placeholder{
+    color:rgba(255,255,255,0.7);
+}
+
+.options{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+    font-size:14px;
+}
+
+.options a{
+    color:white;
+    text-decoration:none;
+}
+
+.options a:hover{
+    text-decoration:underline;
+}
+
+.login-btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:white;
+    color:#2575fc;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.login-btn:hover{
+    transform:translateY(-3px);
+    box-shadow:0 10px 20px rgba(255,255,255,0.25);
+}
+
+.signup{
+    text-align:center;
+    margin-top:20px;
+    font-size:14px;
+}
+
+.signup a{
+    color:white;
+    font-weight:600;
+    text-decoration:none;
+}
+
+.signup a:hover{
+    text-decoration:underline;
+}
+
+.message{
+    text-align:center;
+    margin-top:15px;
+    font-size:14px;
+    font-weight:500;
+}
+
+@media(max-width:450px){
+    .login-container{
+        width:90%;
+        padding:30px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="login-container">
+    <h2>Welcome Back</h2>
+
+    <form id="loginForm">
+        <div class="input-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="Enter your email">
+        </div>
+
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="password" placeholder="Enter your password">
+        </div>
+
+        <div class="options">
+            <label>
+                <input type="checkbox"> Remember me
+            </label>
+            <a href="#">Forgot Password?</a>
+        </div>
+
+        <button type="submit" class="login-btn">
+            Sign In
+        </button>
+
+        <div class="message" id="message"></div>
+    </form>
+
+    <div class="signup">
+        Don't have an account?
+        <a href="#">Create Account</a>
+    </div>
+</div>
+
+<script>
+const form = document.getElementById("loginForm");
+const message = document.getElementById("message");
+
+form.addEventListener("submit", function(e){
+    e.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if(email === "" || password === ""){
+        message.style.color = "#ffcccc";
+        message.textContent = "Please fill in all fields.";
+        return;
+    }
+
+    if(password.length < 6){
+        message.style.color = "#ffd166";
+        message.textContent = "Password must be at least 6 characters.";
+        return;
+    }
+
+    message.style.color = "#90ee90";
+    message.textContent = "Login successful!";
+});
+</script>
+
+</body>
+</html>

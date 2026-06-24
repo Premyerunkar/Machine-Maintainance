@@ -1,0 +1,47 @@
+<div class="page-header">
+  <div>
+    <h2>Analytical Report Engine</h2>
+    <p>System-wide diagnostics classification overview distribution.</p>
+  </div>
+</div>
+
+<div class="analytics-grid">
+  <div class="chart-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 320px;">
+    <h3 class="chart-title">Visual Allocation Share Matrix</h3>
+    <canvas id="canvas-report-pie" width="240" height="240" style="margin-top:1rem;"></canvas>
+  </div>
+</div>
+
+<script>
+  (async function renderAnalyticsView() {
+      const canvas = document.getElementById('canvas-report-pie');
+      const ctx = canvas.getContext('2d');
+      
+      const { data, error } = await db.from('tickets').select('status');
+      if(error || !data) return;
+
+      let openCount = data.filter(t => t.status === 'Open').length;
+      let closedCount = data.filter(t => t.status === 'Resolved' || t.status === 'Closed').length;
+      let progressCount = data.length - (openCount + closedCount);
+
+      const total = data.length || 1;
+      const slices = [openCount, closedCount, progressCount];
+      const colors = ['#ef4444', '#10b981', '#f59e0b'];
+
+      let startAngle = -Math.PI / 2;
+      ctx.clearRect(0,0,240,240);
+
+      slices.forEach((val, idx) => {
+          const sliceAngle = (val / total) * Math.PI * 2;
+          if(sliceAngle === 0) return;
+          
+          ctx.beginPath();
+          ctx.moveTo(120, 120);
+          ctx.arc(120, 120, 100, startAngle, startAngle + sliceAngle);
+          ctx.closePath();
+          ctx.fillStyle = colors[idx];
+          ctx.fill();
+          startAngle += sliceAngle;
+      });
+  })();
+</script>

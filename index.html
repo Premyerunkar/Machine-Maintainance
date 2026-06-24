@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPFL — Machine Maintenance ITSM</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="global.css">
+</head>
+<body>
+
+<div id="view-mount-point">
+  </div>
+
+<div class="modal-overlay" id="modal-ticket">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-ticket-title">Ticket Details</span>
+      <button class="modal-close" onclick="closeModal('modal-ticket')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-ticket-body"></div>
+    <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="closeModal('modal-ticket')">Close</button></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" style="display:none"></div>
+
+<script src="core/app-engine.js"></script>
+</body>
+</html>

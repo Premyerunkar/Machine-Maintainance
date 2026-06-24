@@ -1,0 +1,208 @@
+<div class="page active" id="page-user">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-brand">Machine Maintenance</div>
+      <div class="topbar-badge">User Portal</div>
+      <div class="topbar-right">
+        <div class="realtime-indicator"><div class="realtime-dot" id="rt-dot-user"></div><span id="rt-label-user">Connecting…</span></div>
+        <div class="topbar-user"><div class="avatar" id="user-avatar-top"></div><span id="user-name-top"></span></div>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </div>
+    <div class="app-body">
+      <div class="sidebar">
+        <div class="sidebar-section-label">Menu</div>
+        <div class="nav-item active" data-view="user-dashboard" onclick="switchView(this,'user')"><span class="nav-icon">🏠</span> Dashboard</div>
+        <div class="nav-item" data-view="user-tickets" onclick="switchView(this,'user')"><span class="nav-icon">🎫</span> My Tickets<span class="nav-badge" id="u-badge-open">0</span></div>
+        <div class="nav-item" data-view="user-new-ticket" onclick="switchView(this,'user')"><span class="nav-icon">➕</span> New Ticket</div>
+        <div class="sidebar-section-label" style="margin-top:1rem">Account</div>
+        <div class="nav-item" data-view="user-profile" onclick="switchView(this,'user')"><span class="nav-icon">👤</span> Profile</div>
+      </div>
+      <div class="main-content">
+        
+        <div class="view active" id="view-user-dashboard">
+          <div class="welcome-bar">
+            <div><h3 id="u-welcome-name">Welcome back!</h3><p>Real-time status of your maintenance requests.</p></div>
+            <button class="btn btn-primary" style="width:auto; color: aliceblue;" onclick="goNewTicket()">+ Raise New Ticket</button>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card c-total"><div class="stat-label">Total Tickets</div><div class="stat-value" id="u-stat-total">—</div><div class="stat-sub">All time</div></div>
+            <div class="stat-card c-open"><div class="stat-label">Open</div><div class="stat-value" id="u-stat-open">—</div><div class="stat-sub">Submitted</div></div>
+            <div class="stat-card c-received"><div class="stat-label">Received</div><div class="stat-value" id="u-stat-received">—</div><div class="stat-sub">Acknowledged</div></div>
+            <div class="stat-card c-progress"><div class="stat-label">In Progress</div><div class="stat-value" id="u-stat-inprog">—</div><div class="stat-sub">Being worked on</div></div>
+            <div class="stat-card c-closed"><div class="stat-label">Resolved</div><div class="stat-value" id="u-stat-resolved">—</div><div class="stat-sub">Completed</div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Recent Tickets</span></div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticket ID</th>
+                  <th>Machine</th>
+                  <th>Component Affected</th>
+                  <th>Priority Status</th>
+                  <th>Current Status</th>
+                  <th>Raised On</th>
+                </tr>
+              </thead>
+              <tbody id="u-recent-tbody">
+                <tr><td colspan="6"><div class="empty-state"><span class="loading-spinner"></span>Syncing local ledger streams…</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="view" id="view-user-tickets">
+          <div class="page-header">
+            <div><h2>My Tickets</h2><p>All maintenance tickets you have raised</p></div>
+            <button class="btn btn-primary" style="width:auto ; color: aliceblue;" onclick="goNewTicket()">+ New Ticket</button>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="filter-bar">
+                <input type="text" placeholder="Search tickets…" oninput="filterUserTickets()" id="u-search"/>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Machinery Unit</th>
+                  <th>Component Class</th>
+                  <th>Latest Action Logged</th>
+                  <th>Priority</th>
+                  <th>Lifecycle Stage</th>
+                  <th>Log Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="u-tickets-tbody">
+                <tr><td colspan="8"><div class="empty-state"><span class="loading-spinner"></span>Syncing dynamic logs…</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="view" id="view-user-new-ticket">
+          <div class="page-header"><div><h2>Log Maintenance Event</h2><p>Record machine faults, times, and technical intervention details.</p></div></div>
+          <div class="card" style="max-width:850px">
+            <div class="card-header"><span class="card-title">Production & Maintenance Logging Entry</span></div>
+            <div style="padding:1.6rem">
+              
+              <div class="form-row">
+                <div class="form-group"><label>Machine Unit *</label>
+                  <select id="nt-machine-unit">
+                    <option value="">Select Unit...</option>
+                    <option>Unit 1 (Corrugation Floor)</option>
+                    <option>Unit 2 (Flexo Printing Floor)</option>
+                    <option>Unit 3 (Finishing & Gluing)</option>
+                  </select>
+                </div>
+                <div class="form-group"><label>Machine Name *</label>
+                  <select id="nt-machine-name">
+                    <option value="">Machine Name…</option>
+                    <option>BHS Corrugated</option><option>Yuei Corrugated</option><option>Apstar 1224-5 color</option>
+                    <option>Apstar 1628 -4 color</option><option>Xintian 1224-2 color</option><option>Bobst FFG 820-4 color</option>
+                    <option>HFG Meiguang Autogluer</option><option>AG1 Autogluer Quinfeng</option><option>AG2 Autogluer Xintian</option>
+                    <option>Eterna Die Cutting</option><option>CHC Glue Kitchen</option><option>Coal Fire Boiler</option>
+                    <option>Scrap Baller Machine</option><option>Sheet Shredder Machine</option><option>Water RO Plant</option>
+                    <option>ETP Machine</option><option>Rolling Conveyor FFG</option><option>Scrap Conveyor</option>
+                    <option>Tapping Machine</option><option>Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group"><label>Machine Component *</label>
+                  <select id="nt-machine-component">
+                    <option value="">Select Component...</option>
+                    <option>Assembly Parts</option>
+                    <option>Battery and Electrics</option>
+                    <option>Bearings</option>
+                    <option>Blades and cutters</option>
+                    <option>Brakes</option>
+                    <option>Consumables</option><option>Dies and tooling</option>
+                    <option>Drive and Transmission </option><option>Filters</option>
+                    <option>Heating Elements</option><option>Lubricants</option>
+                    <option>Rolls and Cylinders</option><option>Seals and Gasket</option> 
+                    <option>Sensor and Electrics</option><option>Steam System</option>
+                    <option>Tyres and Wheels</option><option>Vaccum System</option>         
+                  </select>
+                </div>
+                <div class="form-group"><label>Sub Component</label><input type="text" id="nt-sub-component" placeholder="e.g. Heating Roll Bearings"/></div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group"><label>Failure Mode</label>
+                  <select id="nt-failure-mode">
+                    <option value="">Select Failure Mode...</option>
+                    <option>Wear & Tear</option>
+                    <option>Electrical Short Circuit / Burn</option>
+                    <option>Oil Leakage / Pressure Drop</option>
+                    <option>Misalignment / Jamming</option>
+                    <option>Sensor Fault / No Signal</option>
+                    <option>Lack of Lubrication</option>
+                  </select>
+                </div>
+                <div class="form-group"><label>Maintenance Type *</label>
+                  <select id="nt-maint-type">
+                    <option value="">Select Maintenance Type...</option>
+                    <option>Breakdown Maintenance (BM)</option>
+                    <option>Preventive Maintenance (PM)</option>
+                    <option>Predictive Maintenance</option>
+                    <option>Corrective Maintenance</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group"><label>Breakdown Start Time *</label><input type="time" id="nt-start-time" onchange="calculateDowntime()"/></div>
+                <div class="form-group"><label>Repair End Time</label><input type="time" id="nt-end-time" onchange="calculateDowntime()"/></div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group"><label>Calculated Downtime (Mins)</label><input type="text" id="nt-downtime" placeholder="Calculated automatically" readonly style="background:var(--surface3); font-weight:bold; color:var(--accent2);"/></div>
+                <div class="form-group"><label>Production Loss (Qty/Kg)</label><input type="text" id="nt-prod-loss" placeholder="e.g. 500 Sheets"/></div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group"><label>Spare Part Used</label><input type="text" id="nt-part-used" placeholder="e.g. SKF 6204 Bearing"/></div>
+                <div class="form-group"><label>Parts Cost (₹)</label><input type="number" id="nt-parts-cost" placeholder="0.00"/></div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group"><label>Labour Cost (₹)</label><input type="number" id="nt-labour-cost" placeholder="0.00"/></div>
+                <div class="form-group"><label>Status / Next Stage *</label>
+                  <select id="nt-status">
+                    <option>Open</option>
+                    <option>In Progress</option>
+                    <option>Pending Spare Parts</option>
+                    <option>Resolved / Done</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group"><label>Next PM Due Date</label><input type="date" id="nt-next-pm"/></div>
+                <div class="form-group"><label>Contact / Remarks</label><input type="text" id="nt-remarks" placeholder="General observations or notes..."/></div>
+              </div>
+
+              <div class="form-group"><label>Action Taken Summary</label><textarea id="nt-action-taken" rows="3" placeholder="Describe the physical work done to fix the issue..."></textarea></div>
+
+              <div style="display:flex;gap:.75rem;margin-top:.5rem">
+                <button class="btn btn-primary" style="width:auto" id="btn-submit-ticket" onclick="submitTicket()">🚀 Log / Save Ticket</button>
+                <button class="btn btn-secondary" onclick="clearNewTicket()">Clear Form</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="view" id="view-user-profile">
+          <div class="page-header"><div><h2>My Profile</h2><p>Your account details</p></div></div>
+          <div class="card" style="max-width:600px;padding:1.5rem"><div class="profile-card" id="u-profile-card"></div></div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+</div>
