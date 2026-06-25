@@ -4,7 +4,7 @@
       <div class="topbar-brand">Machine Maintenance</div>
       <div class="topbar-badge">User Portal</div>
       <div class="topbar-right">
-        <div class="realtime-indicator"><div class="realtime-dot" id="rt-dot-user"></div><span id="rt-label-user">Connecting…</span></div>
+        <div class="realtime-indicator"><div class="realtime-dot" id="rt-dot-user"></div><span id="rt-label-user">Live...</span></div>
         <div class="topbar-user"><div class="avatar" id="user-avatar-top"></div><span id="user-name-top"></span></div>
         <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
       </div>
@@ -13,7 +13,12 @@
       <div class="sidebar">
         <div class="sidebar-section-label">Menu</div>
         <div class="nav-item active" data-view="user-dashboard" onclick="switchView(this,'user')"><span class="nav-icon">🏠</span> Dashboard</div>
-        <div class="nav-item" data-view="user-tickets" onclick="switchView(this,'user')"><span class="nav-icon">🎫</span> My Tickets<span class="nav-badge" id="u-badge-open">0</span></div>
+        
+        <div class="nav-item" data-view="user-tickets" onclick="switchView(this,'user')" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <div><span class="nav-icon"></span> My Tickets</div>
+          <span class="nav-badge" id="u-badge-open">0</span>
+        </div>
+        
         <div class="nav-item" data-view="user-new-ticket" onclick="switchView(this,'user')"><span class="nav-icon">➕</span> New Ticket</div>
         <div class="sidebar-section-label" style="margin-top:1rem">Account</div>
         <div class="nav-item" data-view="user-profile" onclick="switchView(this,'user')"><span class="nav-icon">👤</span> Profile</div>
@@ -67,7 +72,7 @@
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Machinery Unit</th>
+                  <th>Machinery Name</th>
                   <th>Component Class</th>
                   <th>Latest Action Logged</th>
                   <th>Priority</th>
@@ -90,15 +95,8 @@
             <div style="padding:1.6rem">
               
               <div class="form-row">
-                <div class="form-group"><label>Machine Unit *</label>
-                  <select id="nt-machine-unit">
-                    <option value="">Select Unit...</option>
-                    <option>Unit 1 (Corrugation Floor)</option>
-                    <option>Unit 2 (Flexo Printing Floor)</option>
-                    <option>Unit 3 (Finishing & Gluing)</option>
-                  </select>
-                </div>
-                <div class="form-group"><label>Machine Name *</label>
+                <div class="form-group" style="grid-column: span 2;">
+                  <label>Machine Name *</label>
                   <select id="nt-machine-name">
                     <option value="">Machine Name…</option>
                     <option>BHS Corrugated</option><option>Yuei Corrugated</option><option>Apstar 1224-5 color</option>
@@ -107,7 +105,10 @@
                     <option>Eterna Die Cutting</option><option>CHC Glue Kitchen</option><option>Coal Fire Boiler</option>
                     <option>Scrap Baller Machine</option><option>Sheet Shredder Machine</option><option>Water RO Plant</option>
                     <option>ETP Machine</option><option>Rolling Conveyor FFG</option><option>Scrap Conveyor</option>
-                    <option>Tapping Machine</option><option>Other</option>
+                    <option>Tapping Machine</option><option>Yueli BoardLine</option><option>Meiguang Autoglue</option>
+                    <option>DG Set 320 KVA</option><option>DG Set 500 KVA</option><option>Air Compressor</option>
+                    <option>Forklift Toyota</option><option>Forklift Voltas</option><option>Forklift Godrej</option>
+                    <option>Boiler</option><option>Other</option>
                   </select>
                 </div>
               </div>
@@ -136,12 +137,17 @@
                 <div class="form-group"><label>Failure Mode</label>
                   <select id="nt-failure-mode">
                     <option value="">Select Failure Mode...</option>
-                    <option>Wear & Tear</option>
-                    <option>Electrical Short Circuit / Burn</option>
-                    <option>Oil Leakage / Pressure Drop</option>
-                    <option>Misalignment / Jamming</option>
-                    <option>Sensor Fault / No Signal</option>
-                    <option>Lack of Lubrication</option>
+                    <option>Mechanical</option>
+                    <option>Electrical</option>
+                    <option>Pneumatic</option>
+                    <option>Hydraulic</option>
+                    <option>Automation/PLC</option>
+                    <option>Utility</option>
+                    <option>Material Related</option>
+                    <option>Operation Related</option>
+                    <option>Preventive Maintenance</option>
+                    <option>Safety Related</option>
+                    <option>Other</option>
                   </select>
                 </div>
                 <div class="form-group"><label>Maintenance Type *</label>
@@ -161,7 +167,7 @@
               </div>
 
               <div class="form-row">
-                <div class="form-group"><label>Calculated Downtime (Mins)</label><input type="text" id="nt-downtime" placeholder="Calculated automatically" readonly style="background:var(--surface3); font-weight:bold; color:var(--accent2);"/></div>
+                <div class="form-group"><label>Calculated Downtime (Mins)</label><input type="text" id="nt-downtime" placeholder="Total Downtime" readonly style="background:var(--surface3); font-weight:bold; color:var(--accent2);"/></div>
                 <div class="form-group"><label>Production Loss (Qty/Kg)</label><input type="text" id="nt-prod-loss" placeholder="e.g. 500 Sheets"/></div>
               </div>
 
@@ -183,14 +189,14 @@
               </div>
 
               <div class="form-row">
-                <div class="form-group"><label>Next PM Due Date</label><input type="date" id="nt-next-pm"/></div>
+                <div class="form-group"><label>Next Maintainance Date</label><input type="date" id="nt-next-pm"/></div>
                 <div class="form-group"><label>Contact / Remarks</label><input type="text" id="nt-remarks" placeholder="General observations or notes..."/></div>
               </div>
 
               <div class="form-group"><label>Action Taken Summary</label><textarea id="nt-action-taken" rows="3" placeholder="Describe the physical work done to fix the issue..."></textarea></div>
 
               <div style="display:flex;gap:.75rem;margin-top:.5rem">
-                <button class="btn btn-primary" style="width:auto" id="btn-submit-ticket" onclick="submitTicket()">🚀 Log / Save Ticket</button>
+                <button class="btn btn-primary" style="width:auto; color: aliceblue;" id="btn-submit-ticket" onclick="submitTicket()">Log / Save Ticket</button>
                 <button class="btn btn-secondary" onclick="clearNewTicket()">Clear Form</button>
               </div>
             </div>
