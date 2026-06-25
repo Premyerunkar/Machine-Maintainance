@@ -1,11 +1,11 @@
 <div class="page active" id="page-admin">
   <div class="app-shell">
     <div class="topbar">
-      <div class="topbar-brand">KPFL Maintenance Ticketing Tool</div>
-      <div class="topbar-badge" style="border-color:#d97706;color:var(--accent)">Admin Panel</div>
+      <div class="topbar-brand">KPPL Maintenance Ticketing Tool</div>
+      <div class="topbar-badge" style="border-color:#d97706; color:var(--accent);">Admin Panel</div>
       <div class="topbar-right">
-        <div class="realtime-indicator"><div class="realtime-dot" id="rt-dot-admin"></div><span id="rt-label-admin">Connecting…</span></div>
-        <div class="topbar-user"><div class="avatar admin-av">AD</div><span>Administrator</span></div>
+        <div class="realtime-indicator"><div class="realtime-dot" id="rt-dot-admin"></div><span id="rt-label-admin">Live...</span></div>
+        <div class="topbar-user"><div class="avatar admin-av"><img src="https://i.tracxn.com/logo/company/Screenshot_from_2024-10-10_15-18-32_ecae2dce-fc36-4207-9635-56b4fc9ac871.png" alt="AD"></div><span>Administrator</span></div>
         <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
       </div>
     </div>
@@ -20,7 +20,9 @@
         <div class="sidebar-section-label" style="margin-top:1rem">Account</div>
         <div class="nav-item" data-view="admin-profile" onclick="switchView(this,'admin')"><span class="nav-icon">👤</span> Profile</div>
       </div>
+      
       <div class="main-content">
+        
         <div class="view active" id="view-admin-dashboard">
           <div class="page-header"><div><h2>Operations Dashboard</h2><p>Real-time overview of all maintenance tickets</p></div></div>
           <div class="stats-grid">
@@ -32,103 +34,179 @@
             <div class="stat-card c-nfix"><div class="stat-label">Cannot Fix</div><div class="stat-value" id="a-stat-nfix">—</div><div class="stat-sub">Escalate</div></div>
             <div class="stat-card c-closed"><div class="stat-label">Resolved</div><div class="stat-value" id="a-stat-resolved">—</div><div class="stat-sub">Done</div></div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem">
             <div class="card">
-              <div class="card-header"><span class="card-title">🔴 Critical & High Tickets</span></div>
-              <table><thead><tr><th>ID</th><th>Machine</th><th>By</th><th>Status</th></tr></thead>
-              <tbody id="a-critical-tbody"><tr><td colspan="4"><div class="empty-state" style="padding:1rem"><span class="loading-spinner"></span>Loading…</div></td></tr></tbody></table>
+              <div class="card-header"><span class="card-title">Critical & High Tickets</span></div>
+              <table>
+                <thead><tr><th>ID</th><th>Machine</th><th>By</th><th>Status</th></tr></thead>
+                <tbody id="a-critical-tbody"><tr><td colspan="4"><div class="empty-state" style="padding:1rem"><span class="loading-spinner"></span>Loading…</div></td></tr></tbody>
+              </table>
             </div>
             <div class="card">
-              <div class="card-header"><span class="card-title">🕐 Latest Tickets</span></div>
-              <table><thead><tr><th>ID</th><th>Machine</th><th>Priority</th><th>Status</th></tr></thead>
-              <tbody id="a-latest-tbody"><tr><td colspan="4"><div class="empty-state" style="padding:1rem"><span class="loading-spinner"></span>Loading…</div></td></tr></tbody></table>
+              <div class="card-header"><span class="card-title">Latest Tickets</span></div>
+              <table>
+                <thead><tr><th>ID</th><th>Machine</th><th>Priority</th><th>Status</th></tr></thead>
+                <tbody id="a-latest-tbody"><tr><td colspan="4"><div class="empty-state" style="padding:1rem"><span class="loading-spinner"></span>Loading…</div></td></tr></tbody>
+              </table>
             </div>
           </div>
         </div>
+
         <div class="view" id="view-admin-tickets">
-          <div class="page-header"><div><h2>All Tickets</h2><p>Manage and update every maintenance ticket</p></div></div>
+          <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+              <h2>Operations Ledger</h2>
+              <p>Administrative log registry tracking all dynamic maintenance interventions</p>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; align-items: center; background: var(--surface2); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border);">
+              <select id="export-category-selector" style="padding: 0.4rem 0.75rem; font-family: sans-serif; font-size: 0.85rem; border: 1px solid var(--border2); border-radius: 4px; outline: none; background: var(--surface);">
+                <option value="ALL">📦 Export: All Log Records</option>
+                <option value="OPEN">¼ Export: Open/Running Incidents</option>
+                <option value="PARTS">⏳ Export: Pending Spare Parts</option>
+                <option value="DONE">¡ Export: Resolved Interventions</option>
+                <option value="HIGH_LOSS">¢ Export: High Downtime (>60 mins)</option>
+              </select>
+              <button class="btn btn-primary" onclick="exportLedgerToExcel()" style="width: auto; padding: 0.45rem 1rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: aliceblue;">
+                ª Export Excel
+              </button>
+            </div>
+          </div>
+
           <div class="card">
             <div class="card-header">
               <div class="filter-bar">
                 <input type="text" placeholder="Search ID, machine, user…" oninput="filterAdminTickets()" id="a-search"/>
-                <select onchange="filterAdminTickets()" id="a-filter-status">
-                  <option value="">All Status</option>
-                  <option>Open</option><option>Received</option><option>In Progress</option>
-                  <option>Pending</option><option>Resolved</option><option>Cannot Be Fixed</option><option>Closed</option>
-                </select>
-                <select onchange="filterAdminTickets()" id="a-filter-priority">
-                  <option value="">All Priority</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
-                </select>
               </div>
             </div>
-            <table><thead><tr><th>ID</th><th>Machine</th><th>Issue / Title</th><th>Submitted By</th><th>Priority</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
-            <tbody id="a-tickets-tbody"><tr><td colspan="8"><div class="empty-state"><span class="loading-spinner"></span>Loading…</div></td></tr></tbody></table>
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Target Machine</th>
+                  <th>Target Component</th>
+                  <th>Log Origin Operator</th>
+                  <th>Priority Rank</th>
+                  <th>Current Status</th>
+                  <th>Log Timestamp</th>
+                  <th>Management Control</th>
+                </tr>
+              </thead>
+              <tbody id="a-tickets-tbody">
+                <tr><td colspan="8"><div class="empty-state"><span class="loading-spinner"></span>Synchronizing operations metrics…</div></td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
+
         <div class="view" id="view-admin-analytics">
           <div class="page-header"><div><h2>Analytics &amp; Reports</h2><p>Visual breakdown of machine maintenance data</p></div></div>
+          
           <div class="analytics-grid">
             <div class="chart-card">
-              <div class="chart-title">🏆 Top Machines by Ticket Volume</div>
+              <div class="chart-title">Top Machines by Ticket Volume</div>
               <div class="chart-subtitle">Which machines need the most maintenance</div>
               <div id="top-machines-list"></div>
             </div>
-            <div class="chart-card" style="display:flex;flex-direction:column;align-items:center">
-              <div style="width:100%"><div class="chart-title">🍕 Tickets by Status</div><div class="chart-subtitle">Distribution across all ticket statuses</div></div>
+            <div class="chart-card" style="display:flex; flex-direction:column; align-items:center">
+              <div style="width:100%"><div class="chart-title">Tickets by Status</div><div class="chart-subtitle">Distribution across all ticket statuses</div></div>
               <canvas id="chart-status-pie" width="260" height="210"></canvas>
               <div class="chart-legend" id="legend-status-pie"></div>
             </div>
           </div>
-          <div class="analytics-grid">
+          
+          <div class="chart-card" style="margin-top: 1.5rem;">
+            <div class="chart-title">⏱ Cumulative Downtime per Machine</div>
+            <div class="chart-subtitle">Total production stoppage duration tracked in minutes</div>
+            <canvas id="chart-machine-downtime" width="860" height="260" style="width:100%; max-width:100%;"></canvas>
+          </div>
+          
+          <div class="analytics-grid" style="margin-top: 1.5rem;">
             <div class="chart-card">
-              <div class="chart-title">📊 Tickets by Issue Type</div>
+              <div class="chart-title">Tickets by Issue Type</div>
               <div class="chart-subtitle">Most common maintenance categories</div>
               <canvas id="chart-issue-bar" width="420" height="240"></canvas>
             </div>
-            <div class="chart-card" style="display:flex;flex-direction:column;align-items:center">
-              <div style="width:100%"><div class="chart-title">🔥 Priority Breakdown</div><div class="chart-subtitle">Urgency distribution of all tickets</div></div>
+            <div class="chart-card" style="display:flex; flex-direction:column; align-items:center">
+              <div style="width:100%"><div class="chart-title">Priority Breakdown</div><div class="chart-subtitle">Urgency distribution of all tickets</div></div>
               <canvas id="chart-priority-donut" width="260" height="210"></canvas>
               <div class="chart-legend" id="legend-priority-donut"></div>
             </div>
           </div>
-          <div class="analytics-grid">
+          
+          <div class="analytics-grid" style="margin-top: 1.5rem;">
             <div class="chart-card">
-              <div class="chart-title">🔧 Tickets per Machine</div>
+              <div class="chart-title">Tickets per Machine</div>
               <div class="chart-subtitle">Side-by-side comparison</div>
               <canvas id="chart-machine-bar" width="420" height="240"></canvas>
             </div>
             <div class="chart-card">
-              <div class="chart-title">👤 Tickets per User</div>
+              <div class="chart-title">Tickets per User</div>
               <div class="chart-subtitle">Submission volume per team member</div>
               <canvas id="chart-user-bar" width="420" height="240"></canvas>
             </div>
           </div>
-          <div style="margin-bottom:1.5rem">
+          
+          <div style="margin-top:1.5rem; margin-bottom:1.5rem">
             <div class="chart-card">
-              <div class="chart-title">📉 Machine Health — Stacked Status</div>
+              <div class="chart-title">Machine Health — Stacked Status</div>
               <div class="chart-subtitle">Open vs Resolved vs Cannot Fix per machine</div>
-              <canvas id="chart-stacked-bar" width="860" height="260" style="width:100%;max-width:100%"></canvas>
+              <canvas id="chart-stacked-bar" width="860" height="260" style="width:100%; max-width:100%"></canvas>
               <div class="chart-legend" id="legend-stacked"></div>
             </div>
           </div>
         </div>
+
         <div class="view" id="view-admin-machines">
-          <div class="page-header"><div><h2>Machine Registry</h2><p>All machines with maintenance history</p></div></div>
-          <div class="card"><table><thead><tr><th>Machine ID</th><th>Machine Name</th><th>Location</th><th>Total Tickets</th><th>Active Tickets</th><th>Last Ticket</th></tr></thead><tbody id="a-machines-tbody"></tbody></table></div>
+          <div class="page-header"><div><h2>Machine Registry</h2><p>All assets compiled with real-time operational status updates</p></div></div>
+          <div class="card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Machine ID</th>
+                  <th>Machine Name</th>
+                  <th>Total Incidents</th>
+                  <th>Active Workorders</th>
+                  <th>Last Transaction Logged</th>
+                </tr>
+              </thead>
+              <tbody id="a-machines-tbody"></tbody>
+            </table>
+          </div>
         </div>
+
         <div class="view" id="view-admin-users">
-          <div class="page-header"><div><h2>Users</h2><p>Users who have submitted maintenance requests</p></div></div>
-          <div class="card"><table><thead><tr><th>User</th><th>Department</th><th>Total</th><th>Open</th><th>Resolved</th><th>Last Activity</th></tr></thead><tbody id="a-users-tbody"></tbody></table></div>
+          <div class="page-header"><div><h2>Users Directory</h2><p>Overview of active field users logging data logs</p></div></div>
+          <div class="card">
+            <table>
+              <thead>
+                <tr>
+                  <th>User Profile</th>
+                  <th>Assigned Department</th>
+                  <th>Total Logged</th>
+                  <th>Open Stage</th>
+                  <th>Resolved</th>
+                  <th>Last Active Timestamp</th>
+                </tr>
+              </thead>
+              <tbody id="a-users-tbody"></tbody>
+            </table>
+          </div>
         </div>
+
         <div class="view" id="view-admin-profile">
           <div class="page-header"><div><h2>Admin Profile</h2></div></div>
-          <div class="card" style="max-width:600px;padding:1.5rem">
+          <div class="card" style="max-width:600px; padding:1.5rem">
             <div class="profile-card">
-              <div class="profile-avatar admin-av">AD</div>
-              <div><div class="profile-name">Administrator</div><div class="profile-role">System Administrator · Full Access</div></div>
+              <div class="profile-avatar admin-av"><img src="https://i.tracxn.com/logo/company/Screenshot_from_2024-10-10_15-18-32_ecae2dce-fc36-4207-9635-56b4fc9ac871.png" alt="AD"></div>
+              <div>
+                <div class="profile-name">Administrator</div>
+                <div class="profile-role" style="color: var(--text-muted);">System Administrator · Full Access</div>
+              </div>
             </div>
           </div>
         </div>
+        
       </div>
     </div>
   </div>
