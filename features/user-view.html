@@ -15,7 +15,7 @@
         <div class="nav-item active" data-view="user-dashboard" onclick="switchView(this,'user')"><span class="nav-icon">🏠</span> Dashboard</div>
         
         <div class="nav-item" data-view="user-tickets" onclick="switchView(this,'user')" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <div><span class="nav-icon"></span> My Tickets</div>
+          <div><span class="nav-icon">🎫</span> My Tickets</div>
           <span class="nav-badge" id="u-badge-open">0</span>
         </div>
         
@@ -27,7 +27,7 @@
         
         <div class="view active" id="view-user-dashboard">
           <div class="welcome-bar">
-            <div><h3 id="u-welcome-name">Welcome back!</h3><p>Real-time status of your maintenance requests.</p></div>
+            <div><h3 id="u-welcome-name">Welcome back!</h3><p>Real-time status of your Maintainance requests.</p></div>
             <button class="btn btn-primary" style="width:auto; color: aliceblue;" onclick="goNewTicket()">+ Raise New Ticket</button>
           </div>
           <div class="stats-grid">
@@ -82,14 +82,14 @@
                 </tr>
               </thead>
               <tbody id="u-tickets-tbody">
-                <tr><td colspan="8"><div class="empty-state"><span class="loading-spinner"></span>Syncing dynamic logs…</div></td></tr>
+                <tr><td colspan="8"><div class="empty-state"><span class="loading-spinner"></span>Syncing logs…</div></td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
         <div class="view" id="view-user-new-ticket">
-          <div class="page-header"><div><h2>Log Maintenance Event</h2><p>Record machine faults, times, and technical intervention details.</p></div></div>
+          <div class="page-header"><div><h2>Maintenance Ticket</h2><p>Record machine faults, times, and technical intervention details.</p></div></div>
           <div class="card" style="max-width:850px">
             <div class="card-header"><span class="card-title">Production & Maintenance Logging Entry</span></div>
             <div style="padding:1.6rem">
@@ -150,14 +150,10 @@
                     <option>Other</option>
                   </select>
                 </div>
-                <div class="form-group"><label>Maintenance Type *</label>
-                  <select id="nt-maint-type">
-                    <option value="">Select Maintenance Type...</option>
-                    <option>Breakdown Maintenance (BM)</option>
-                    <option>Preventive Maintenance (PM)</option>
-                    <option>Predictive Maintenance</option>
-                    <option>Corrective Maintenance</option>
-                  </select>
+                
+                <div class="form-group">
+                  <label>Failure Reason in detail *</label>
+                  <input type="text" id="nt-maint-type" placeholder="Describe the specific breakdown symptom or cause..."/>
                 </div>
               </div>
 
@@ -189,7 +185,7 @@
               </div>
 
               <div class="form-row">
-                <div class="form-group"><label>Next Maintainance Date</label><input type="date" id="nt-next-pm"/></div>
+                <div class="form-group"><label>Next Maintenance Date</label><input type="date" id="nt-next-pm"/></div>
                 <div class="form-group"><label>Contact / Remarks</label><input type="text" id="nt-remarks" placeholder="General observations or notes..."/></div>
               </div>
 
