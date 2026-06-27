@@ -12,7 +12,7 @@ const USERS = {
   Ranjit:  { name:'Ranjit Singh',   dept:'Accounts', email:'ranjit.singh@khetangroup.in',   phone:'8805418158', role:'Accounts Executive',       avatar: 'https://media.licdn.com/dms/image/v2/D4D35AQGBwjQZsqx2EQ/profile-framedphoto-shrink_800_800/B4DZoB21.AGgAg-/0/1760967745688?e=1782986400&v=beta&t=wpZhZ8wvUq78BrX_5Ft1Eyf1DZ_3y7dhPxmfgkTc6KU' },
   Suraj:   { name:'Suraj Koli',    dept:'Accounts', email:'suraj.koli@khetangroup.in',    phone:'9022728536', role:'Accounts Executive',       avatar: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Gorille_des_plaines_de_l%27ouest_%C3%A0_l%27Espace_Zoologique.jpg/250px-Gorille_des_plaines_de_l%27ouest_%C3%A0_l%27Espace_Zoologique.jpg' },
 };
-const PASSWORDS = { Prem:'pass123', Kuldeep:'pass123', Ranjit:'pass123', Suraj:'pass123', admin:'admin123' };
+const PASSWORDS = { Prem:'pass123', Kuldeep:'pass123', Ranjit:'pass123', Suraj:'pass123', admin:'admi n123' };
 
 let currentUser = null;
 let currentRole = null;
@@ -48,7 +48,7 @@ async function doLogin(type){
   if(type === 'admin'){
     const u = document.getElementById('admin-username').value.trim();
     const p = document.getElementById('admin-password').value;
-    if(u === 'admin' && p === 'admin123'){
+    if(u === 'admin' && p === 'admi n123'){
       currentRole = 'admin';
       await loadView('admin-view');
       currentView = 'admin-dashboard';
