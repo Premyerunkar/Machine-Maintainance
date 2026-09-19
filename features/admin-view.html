@@ -1,16 +1,26 @@
 <div class="page active" id="page-admin">
   <div class="app-shell">
+    
+    <!-- Topbar with responsive Hamburger Toggle Button -->
     <div class="topbar">
-      <div class="topbar-brand">KPPL Maintenance Ticketing Tool</div>
-      <div class="topbar-badge" style="border-color:#d97706; color:var(--accent);">Admin Panel</div>
+      <div class="topbar-left">
+        <button class="nav-toggle-btn" onclick="toggleMobileSidebar()" aria-label="Toggle Navigation">☰</button>
+        <div class="topbar-brand">KPPL Maintenance</div>
+        <div class="topbar-badge" style="border-color:#d97706; color:var(--accent);">Admin Panel</div>
+      </div>
       <div class="topbar-right">
         <div class="realtime-indicator"><div class="realtime-dot" id="rt-dot-admin"></div><span id="rt-label-admin">Live...</span></div>
         <div class="topbar-user"><div class="avatar admin-av"><img src="https://i.tracxn.com/logo/company/Screenshot_from_2024-10-10_15-18-32_ecae2dce-fc36-4207-9635-56b4fc9ac871.png" alt="AD"></div><span>Administrator</span></div>
         <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
       </div>
     </div>
+    
     <div class="app-body">
-      <div class="sidebar">
+      <!-- Backdrop Dimmer for Mobile Drawer -->
+      <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
+
+      <!-- Navigation Sidebar -->
+      <div class="sidebar" id="app-sidebar">
         <div class="sidebar-section-label">Menu</div>
         <div class="nav-item active" data-view="admin-dashboard" onclick="switchView(this,'admin')"><span class="nav-icon">📊</span> Dashboard</div>
         <div class="nav-item" data-view="admin-tickets" onclick="switchView(this,'admin')"><span class="nav-icon">🎫</span> All Tickets<span class="nav-badge" id="a-badge-open">0</span></div>
@@ -35,9 +45,9 @@
             <div class="stat-card c-nfix"><div class="stat-label">Cannot Fix</div><div class="stat-value" id="a-stat-nfix">—</div><div class="stat-sub">Escalate</div></div>
             <div class="stat-card c-closed"><div class="stat-label">Resolved</div><div class="stat-value" id="a-stat-resolved">—</div><div class="stat-sub">Done</div></div>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1.2rem; margin-bottom:1.5rem">
             <div class="card">
-              <div class="card-header"><span class="card-title">Critical & High Tickets</span></div>
+              <div class="card-header"><span class="card-title">Critical &amp; High Tickets</span></div>
               <table>
                 <thead><tr><th>ID</th><th>Machine</th><th>By</th><th>Status</th></tr></thead>
                 <tbody id="a-critical-tbody"><tr><td colspan="4"><div class="empty-state" style="padding:1rem"><span class="loading-spinner"></span>Loading…</div></td></tr></tbody>
@@ -55,28 +65,28 @@
 
         <!-- ALL TICKETS VIEW -->
         <div class="view" id="view-admin-tickets">
-          <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <div class="page-header">
             <div>
               <h2>Operations Ledger</h2>
               <p>Administrative log registry tracking all dynamic maintenance interventions</p>
             </div>
-            <div style="display: flex; gap: 0.5rem; align-items: center; background: var(--surface2); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border);">
-              <select id="export-category-selector" style="padding: 0.4rem 0.75rem; font-family: sans-serif; font-size: 0.85rem; border: 1px solid var(--border2); border-radius: 4px; outline: none; background: var(--surface);">
+            <div style="display: flex; gap: 0.5rem; align-items: center; background: var(--surface2); padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid var(--border); flex-wrap: wrap;">
+              <select id="export-category-selector" style="padding: 0.4rem 0.6rem; font-size: 0.8rem; border: 1px solid var(--border2); border-radius: 4px; outline: none; background: var(--surface);">
                 <option value="ALL">📦 Export: All Log Records</option>
                 <option value="OPEN">🔴 Export: Open/Running Incidents</option>
                 <option value="PARTS">⏳ Export: Pending Spare Parts</option>
                 <option value="DONE">✅ Export: Resolved Interventions</option>
                 <option value="HIGH_LOSS">💸 Export: High Downtime (>60 mins)</option>
               </select>
-              <button class="btn btn-primary" onclick="exportLedgerToExcel()" style="width: auto; padding: 0.45rem 1rem; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: aliceblue;">
+              <button class="btn btn-primary btn-sm" onclick="exportLedgerToExcel()">
                 📥 Export Excel
               </button>
             </div>
           </div>
           <div class="card">
             <div class="card-header">
-              <div class="filter-bar">
-                <input type="text" placeholder="Search ID, machine, user…" oninput="filterAdminTickets()" id="a-search"/>
+              <div class="filter-bar" style="width: 100%;">
+                <input type="text" placeholder="Search ID, machine, user…" oninput="filterAdminTickets()" id="a-search" style="width: 100%;"/>
               </div>
             </div>
             <table>
@@ -102,18 +112,57 @@
         <!-- ANALYTICS VIEW -->
         <div class="view" id="view-admin-analytics">
           <div class="page-header"><div><h2>Analytics &amp; Reports</h2><p>Visual breakdown of machine maintenance data</p></div></div>
+          
+          <!-- FINANCIAL COST ANALYSIS CARD -->
           <div class="chart-card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent2);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.8rem;">
               <div>
                 <div class="chart-title">💰 Maintenance &amp; Repair Cost Analysis per Machine</div>
-                <div class="chart-subtitle">Total financial impact (Parts + Labour Expenses) compiled per production line</div>
+                <div class="chart-subtitle">Total financial impact (Parts + Labour Expenses) with date windowing</div>
               </div>
-              <button class="btn btn-primary" onclick="openCostDetailsModal()" style="width:auto; padding: 0.5rem 1.2rem; font-size: 0.85rem; color: aliceblue; display: inline-flex; align-items: center; gap: 0.4rem;">
-                🔍 View Detailed Cost Breakdown
-              </button>
+              <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:0.3rem; font-size:0.75rem; color:var(--text-muted);">
+                  <span>From:</span>
+                  <input type="date" id="cost-date-start" onchange="applyCostAnalyticsDateFilter()" style="padding:0.3rem 0.5rem; font-size:0.78rem; border:1px solid var(--border2); border-radius:4px; background:var(--surface2);" />
+                </div>
+                <div style="display:flex; align-items:center; gap:0.3rem; font-size:0.75rem; color:var(--text-muted);">
+                  <span>To:</span>
+                  <input type="date" id="cost-date-end" onchange="applyCostAnalyticsDateFilter()" style="padding:0.3rem 0.5rem; font-size:0.78rem; border:1px solid var(--border2); border-radius:4px; background:var(--surface2);" />
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="resetCostAnalyticsDateFilter()">Reset</button>
+                <button class="btn btn-primary btn-sm" onclick="openCostDetailsModal()">
+                  🔍 Cost Deep-Dive
+                </button>
+              </div>
             </div>
             <canvas id="chart-machine-cost" width="860" height="260" style="width:100%; max-width:100%; margin-top: 1rem;"></canvas>
           </div>
+
+          <!-- DOWNTIME ANALYSIS CARD -->
+          <div class="chart-card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--warn);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.8rem;">
+              <div>
+                <div class="chart-title">⏱️ Cumulative Downtime per Machine</div>
+                <div class="chart-subtitle">Production stoppage duration with timeline range filtering</div>
+              </div>
+              <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:0.3rem; font-size:0.75rem; color:var(--text-muted);">
+                  <span>From:</span>
+                  <input type="date" id="analytics-date-start" onchange="applyAnalyticsDateFilter()" style="padding:0.3rem 0.5rem; font-size:0.78rem; border:1px solid var(--border2); border-radius:4px; background:var(--surface2);" />
+                </div>
+                <div style="display:flex; align-items:center; gap:0.3rem; font-size:0.75rem; color:var(--text-muted);">
+                  <span>To:</span>
+                  <input type="date" id="analytics-date-end" onchange="applyAnalyticsDateFilter()" style="padding:0.3rem 0.5rem; font-size:0.78rem; border:1px solid var(--border2); border-radius:4px; background:var(--surface2);" />
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="resetAnalyticsDateFilter()">Reset</button>
+                <button class="btn btn-primary btn-sm" onclick="openDowntimeDetailsModal()">
+                  🔎 Stoppage Deep-Dive
+                </button>
+              </div>
+            </div>
+            <canvas id="chart-machine-downtime" width="860" height="260" style="width:100%; max-width:100%; margin-top: 1rem;"></canvas>
+          </div>
+
           <div class="analytics-grid">
             <div class="chart-card">
               <div class="chart-title">Top Machines by Ticket Volume</div>
@@ -126,12 +175,8 @@
               <div class="chart-legend" id="legend-status-pie"></div>
             </div>
           </div>
-          <div class="chart-card" style="margin-top: 1.5rem;">
-            <div class="chart-title">⏱ Cumulative Downtime per Machine</div>
-            <div class="chart-subtitle">Total production stoppage duration tracked in minutes</div>
-            <canvas id="chart-machine-downtime" width="860" height="260" style="width:100%; max-width:100%;"></canvas>
-          </div>
-          <div class="analytics-grid" style="margin-top: 1.5rem;">
+          
+          <div class="analytics-grid">
             <div class="chart-card">
               <div class="chart-title">Tickets by Issue Type</div>
               <div class="chart-subtitle">Most common maintenance categories</div>
@@ -141,18 +186,6 @@
               <div style="width:100%"><div class="chart-title">Priority Breakdown</div><div class="chart-subtitle">Urgency distribution of all tickets</div></div>
               <canvas id="chart-priority-donut" width="260" height="210"></canvas>
               <div class="chart-legend" id="legend-priority-donut"></div>
-            </div>
-          </div>
-          <div class="analytics-grid" style="margin-top: 1.5rem;">
-            <div class="chart-card">
-              <div class="chart-title">Tickets per Machine</div>
-              <div class="chart-subtitle">Side-by-side comparison</div>
-              <canvas id="chart-machine-bar" width="420" height="240"></canvas>
-            </div>
-            <div class="chart-card">
-              <div class="chart-title">Tickets per User</div>
-              <div class="chart-subtitle">Submission volume per team member</div>
-              <canvas id="chart-user-bar" width="420" height="240"></canvas>
             </div>
           </div>
         </div>
@@ -185,12 +218,11 @@
             </div>
           </div>
 
-          <!-- USER REGISTRATION / MODIFICATION FORM -->
           <div class="card" style="max-width:920px; margin-bottom: 2rem;">
             <div class="card-header" style="background:var(--surface2);">
               <span class="card-title" id="usr-form-title">👤 User Registration &amp; Form Permissions</span>
             </div>
-            <div style="padding:1.6rem">
+            <div style="padding:1.4rem">
               <div class="form-row">
                 <div class="form-group">
                   <label>Full Name *</label>
@@ -227,34 +259,32 @@
                 </div>
               </div>
 
-              <!-- PERMISSIONS MATRIX SECTION (INCLUDING START & END TIME MODIFICATION) -->
               <div class="detail-section" style="background:var(--surface); border:1px solid var(--border2); margin-top:1.2rem;">
-                <h4 style="margin:0 0 0.8rem 0; font-size:0.8rem; color:var(--text); text-transform:uppercase; letter-spacing:0.08em;">
+                <h4 style="margin:0 0 0.8rem 0; font-size:0.75rem; color:var(--text); text-transform:uppercase; letter-spacing:0.08em;">
                   🔒 Content Rights: Allow User to View &amp; Modify Attributes
                 </h4>
-                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.75rem; font-size:0.85rem;">
-                  <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-start_time" checked /> Modify Breakdown Start Time</label>
-                  <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-end_time" checked /> Modify Repair End Time</label>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:0.65rem; font-size:0.82rem;">
+                  <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-start_time" checked /> Start Time</label>
+                  <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-end_time" checked /> End Time</label>
                   <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-sub_component" checked /> Sub Component</label>
                   <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-failure_mode" checked /> Failure Mode</label>
                   <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-prod_loss" checked /> Production Loss</label>
                   <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-spare_part" checked /> Spare Part Used</label>
                   <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-parts_cost" checked /> Parts Cost (₹)</label>
                   <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-labour_cost" checked /> Labour Cost (₹)</label>
-                  <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-next_pm" checked /> Next Maintenance Date</label>
+                  <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-next_pm" checked /> Next PM Date</label>
                   <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-remarks" checked /> Remarks / Notes</label>
-                  <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-action_taken" checked /> Action Taken Summary</label>
+                  <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"><input type="checkbox" id="perm-action_taken" checked /> Action Summary</label>
                 </div>
               </div>
 
-              <div style="display:flex; gap:0.75rem; margin-top:1.5rem; justify-content: flex-end;">
-                <button type="button" class="btn btn-secondary" onclick="clearUserForm()" style="width:auto; padding:0.6rem 1.4rem;">Clear Form</button>
-                <button type="button" class="btn btn-primary" id="btn-save-user" onclick="saveSystemUser()" style="width:auto; padding:0.6rem 1.8rem; color:aliceblue;">💾 Save / Update User</button>
+              <div style="display:flex; gap:0.6rem; margin-top:1.2rem; justify-content: flex-end; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary" onclick="clearUserForm()">Clear Form</button>
+                <button type="button" class="btn btn-primary" id="btn-save-user" onclick="saveSystemUser()">💾 Save / Update User</button>
               </div>
             </div>
           </div>
 
-          <!-- USER DIRECTORY TABLE -->
           <div class="card" style="max-width:920px;">
             <div class="card-header" style="background:var(--surface2);"><span class="card-title">👥 Active User Directory</span></div>
             <table>
@@ -264,7 +294,7 @@
                   <th>Username</th>
                   <th>Role</th>
                   <th>Department</th>
-                  <th>Permissions Active</th>
+                  <th>Permissions</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -283,7 +313,7 @@
           </div>
           <div class="card" style="max-width:920px; margin-bottom: 2rem;">
             <div class="card-header" style="background:var(--surface2);"><span class="card-title">⚙️ Machine Configuration &amp; Spare Parts Catalog</span></div>
-            <div style="padding:1.6rem">
+            <div style="padding:1.4rem">
               <div class="form-row">
                 <div class="form-group">
                   <label>Machine Name <span style="color:var(--danger)">*</span></label>
@@ -318,10 +348,10 @@
               </div>
               <div class="form-group"><label>Description &amp; Specifications (Optional)</label><textarea id="tool-machine-desc" rows="2" placeholder="Enter specifications or notes..."></textarea></div>
 
-              <div class="detail-section" style="margin-top: 1.5rem; background: var(--surface); border: 1px solid var(--border2);">
+              <div class="detail-section" style="margin-top: 1.2rem; background: var(--surface); border: 1px solid var(--border2);">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
-                  <h4 style="margin:0; font-size:0.8rem; color:var(--text); text-transform:uppercase; letter-spacing:0.08em;">🔩 Associated Spare Parts Inventory</h4>
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="addSparePartRow()" style="display:inline-flex; align-items:center; gap:0.3rem;">➕ Add Spare Part Row</button>
+                  <h4 style="margin:0; font-size:0.75rem; color:var(--text); text-transform:uppercase; letter-spacing:0.08em;">🔩 Associated Spare Parts Inventory</h4>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="addSparePartRow()">➕ Add Spare Part Row</button>
                 </div>
                 <table style="margin-bottom:0.5rem;">
                   <thead>
@@ -336,9 +366,9 @@
                 </table>
               </div>
 
-              <div style="display:flex; gap:0.75rem; margin-top:1.5rem; justify-content: flex-end;">
-                <button type="button" class="btn btn-secondary" onclick="clearMachineToolForm()" style="width:auto; padding:0.6rem 1.4rem;">Clear Form</button>
-                <button type="button" class="btn btn-primary" id="btn-save-tool-machine" onclick="saveMachineFromTool()" style="width:auto; padding:0.6rem 1.8rem; color:aliceblue;">💾 Save Machine Configuration</button>
+              <div style="display:flex; gap:0.6rem; margin-top:1.2rem; justify-content: flex-end; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary" onclick="clearMachineToolForm()">Clear Form</button>
+                <button type="button" class="btn btn-primary" id="btn-save-tool-machine" onclick="saveMachineFromTool()">💾 Save Machine Configuration</button>
               </div>
             </div>
           </div>
@@ -366,7 +396,7 @@
         <!-- ADMIN PROFILE -->
         <div class="view" id="view-admin-profile">
           <div class="page-header"><div><h2>Admin Profile</h2></div></div>
-          <div class="card" style="max-width:600px; padding:1.5rem">
+          <div class="card" style="max-width:600px; padding:1.4rem">
             <div class="profile-card">
               <div class="profile-avatar admin-av"><img src="https://i.tracxn.com/logo/company/Screenshot_from_2024-10-10_15-18-32_ecae2dce-fc36-4207-9635-56b4fc9ac871.png" alt="AD"></div>
               <div>
@@ -383,40 +413,49 @@
 
 <!-- FINANCIAL COST DETAILS MODAL -->
 <div class="modal-overlay" id="modal-cost-details">
-  <div class="modal" style="max-width: 960px;">
+  <div class="modal" style="max-width: 980px;">
     <div class="modal-header">
       <div>
         <div class="modal-title">💰 Comprehensive Maintenance Cost Breakdown</div>
-        <p style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem;">Detailed itemized breakdown of parts and labour expenses per machine</p>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem;">Detailed itemized breakdown of parts and labour expenses with date range filtering.</p>
       </div>
       <button class="modal-close" onclick="closeModal('modal-cost-details')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 1.5rem;">
+      <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 1.2rem;">
         <div class="stat-card" style="border-left: 3px solid var(--danger);">
           <div class="stat-label">Active Exposure (Unresolved)</div>
-          <div class="stat-value" id="cost-kpi-unresolved" style="font-size: 1.6rem; color: var(--danger);">₹0</div>
+          <div class="stat-value" id="cost-kpi-unresolved" style="font-size: 1.5rem; color: var(--danger);">₹0</div>
           <div class="stat-sub">Open + In Progress + Pending</div>
         </div>
         <div class="stat-card" style="border-left: 3px solid var(--accent3);">
           <div class="stat-label">Realized (Resolved / Done)</div>
-          <div class="stat-value" id="cost-kpi-resolved" style="font-size: 1.6rem; color: var(--accent3);">₹0</div>
+          <div class="stat-value" id="cost-kpi-resolved" style="font-size: 1.5rem; color: var(--accent3);">₹0</div>
           <div class="stat-sub">Completed repairs</div>
         </div>
         <div class="stat-card" style="border-left: 3px solid var(--accent2);">
-          <div class="stat-label">All-Time Cumulative Cost</div>
-          <div class="stat-value" id="cost-kpi-total" style="font-size: 1.6rem; color: var(--accent2);">₹0</div>
-          <div class="stat-sub">Parts + Labour across all tickets</div>
+          <div class="stat-label">Total Expense in Window</div>
+          <div class="stat-value" id="cost-kpi-total" style="font-size: 1.5rem; color: var(--accent2);">₹0</div>
+          <div class="stat-sub">Parts + Labour in range</div>
         </div>
       </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-        <div style="font-weight:600; font-size:0.9rem;">Machine Expense Ledgers</div>
-        <select id="cost-modal-status-filter" onchange="renderCostModalTable()" style="padding:0.4rem 0.8rem; font-size:0.85rem; border:1px solid var(--border2); border-radius:4px; background:var(--surface2);">
-          <option value="ALL">All Financial Statuses</option>
-          <option value="UNRESOLVED">🔴 Pending Financials (Open / In Progress / Pending Parts)</option>
-          <option value="RESOLVED">✅ Settled Financials (Resolved / Done)</option>
-        </select>
+      <!-- CALENDAR FILTER & STATUS CONTROLS -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.6rem; background:var(--surface2); padding:0.6rem 0.8rem; border-radius:6px; border:1px solid var(--border);">
+        <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+          <span style="font-weight:700; font-size:0.8rem;">Date Range:</span>
+          <input type="date" id="cost-modal-date-start" onchange="applyCostModalDateFilter()" style="padding:0.3rem 0.5rem; font-size:0.78rem; border:1px solid var(--border2); border-radius:4px; background:var(--surface);" />
+          <span style="font-size:0.78rem;">to</span>
+          <input type="date" id="cost-modal-date-end" onchange="applyCostModalDateFilter()" style="padding:0.3rem 0.5rem; font-size:0.78rem; border:1px solid var(--border2); border-radius:4px; background:var(--surface);" />
+          <button class="btn btn-secondary btn-sm" onclick="resetCostModalDateFilter()">Reset</button>
+        </div>
+        <div>
+          <select id="cost-modal-status-filter" onchange="renderCostModalTable()" style="padding:0.3rem 0.5rem; font-size:0.78rem; border:1px solid var(--border2); border-radius:4px; background:var(--surface);">
+            <option value="ALL">All Financial Statuses</option>
+            <option value="UNRESOLVED">🔴 Pending Financials (Open / In Progress / Pending Parts)</option>
+            <option value="RESOLVED">✅ Settled Financials (Resolved / Done)</option>
+          </select>
+        </div>
       </div>
 
       <div class="card" style="max-height: 380px; overflow-y: auto;">
@@ -430,6 +469,7 @@
               <th>Parts Cost</th>
               <th>Labour Cost</th>
               <th>Total Cost</th>
+              <th>Logged Date</th>
             </tr>
           </thead>
           <tbody id="cost-details-tbody"></tbody>
@@ -438,7 +478,78 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-cost-details')">Close Overview</button>
-      <button class="btn btn-primary" onclick="exportLedgerToExcel()" style="width:auto; color:aliceblue;">📥 Export Data to Excel</button>
+      <button class="btn btn-primary" onclick="exportLedgerToExcel()">📥 Export Expense Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- DOWNTIME DETAILS MODAL -->
+<div class="modal-overlay" id="modal-downtime-details">
+  <div class="modal" style="max-width: 980px;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">⏱️ Deep-Dive Production Stoppage Analysis</div>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem;">Inspect high-loss breakdown incidents and manage affected workorders directly.</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-downtime-details')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom: 1.2rem;">
+        <div class="stat-card" style="border-left: 3px solid var(--danger);">
+          <div class="stat-label">Total Lost Time</div>
+          <div class="stat-value" id="dt-kpi-total-mins" style="font-size: 1.5rem; color: var(--danger);">0 m</div>
+          <div class="stat-sub" id="dt-kpi-total-hrs">0.0 Hours in selected window</div>
+        </div>
+        <div class="stat-card" style="border-left: 3px solid var(--warn);">
+          <div class="stat-label">Critical Stoppages (>60m)</div>
+          <div class="stat-value" id="dt-kpi-high-count" style="font-size: 1.5rem; color: var(--warn);">0</div>
+          <div class="stat-sub">Extended breakdown events</div>
+        </div>
+        <div class="stat-card" style="border-left: 3px solid var(--accent);">
+          <div class="stat-label">Top Impacted Asset</div>
+          <div class="stat-value" id="dt-kpi-top-machine" style="font-size: 1.15rem; font-weight:700; color: var(--accent); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">—</div>
+          <div class="stat-sub" id="dt-kpi-top-machine-sub">Leading downtime bottleneck</div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.6rem; background:var(--surface2); padding:0.6rem 0.8rem; border-radius:6px; border:1px solid var(--border);">
+        <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+          <span style="font-weight:700; font-size:0.8rem;">Date Window:</span>
+          <input type="date" id="dt-modal-date-start" onchange="applyDowntimeModalDateFilter()" style="padding:0.3rem 0.5rem; font-size:0.78rem; border:1px solid var(--border2); border-radius:4px; background:var(--surface);" />
+          <span style="font-size:0.78rem;">to</span>
+          <input type="date" id="dt-modal-date-end" onchange="applyDowntimeModalDateFilter()" style="padding:0.3rem 0.5rem; font-size:0.78rem; border:1px solid var(--border2); border-radius:4px; background:var(--surface);" />
+          <button class="btn btn-secondary btn-sm" onclick="resetDowntimeModalDateFilter()">Reset</button>
+        </div>
+        <div>
+          <select id="dt-modal-min-filter" onchange="renderDowntimeModalTable()" style="padding:0.3rem 0.5rem; font-size:0.78rem; border:1px solid var(--border2); border-radius:4px; background:var(--surface);">
+            <option value="ALL">All Downtimes Recorded</option>
+            <option value="GT30">Over 30 Minutes</option>
+            <option value="GT60">Over 1 Hour (Critical Loss)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card" style="max-height: 380px; overflow-y: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>Target Machine</th>
+              <th>Breakdown Duration</th>
+              <th>Production Loss</th>
+              <th>Failure Mode</th>
+              <th>Status</th>
+              <th>Logged Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="dt-details-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-downtime-details')">Close Overview</button>
+      <button class="btn btn-primary" onclick="exportLedgerToExcel()">📥 Export Stoppage Report</button>
     </div>
   </div>
 </div>
