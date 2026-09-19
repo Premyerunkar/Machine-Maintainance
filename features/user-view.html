@@ -1,16 +1,26 @@
 <div class="page active" id="page-user">
   <div class="app-shell">
+    
+    <!-- Topbar with responsive Hamburger Toggle Button -->
     <div class="topbar">
-      <div class="topbar-brand">KPPL Maintenance Ticketing Tool</div>
-      <div class="topbar-badge">User Portal</div>
+      <div class="topbar-left">
+        <button class="nav-toggle-btn" onclick="toggleMobileSidebar()" aria-label="Toggle Navigation">☰</button>
+        <div class="topbar-brand">KPPL Maintenance</div>
+        <div class="topbar-badge">User Portal</div>
+      </div>
       <div class="topbar-right">
         <div class="realtime-indicator"><div class="realtime-dot" id="rt-dot-user"></div><span id="rt-label-user">Live...</span></div>
         <div class="topbar-user"><div class="avatar" id="user-avatar-top"></div><span id="user-name-top"></span></div>
         <button class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
       </div>
     </div>
+    
     <div class="app-body">
-      <div class="sidebar">
+      <!-- Backdrop Dimmer for Mobile Drawer -->
+      <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
+
+      <!-- Navigation Sidebar -->
+      <div class="sidebar" id="app-sidebar">
         <div class="sidebar-section-label">Menu</div>
         <div class="nav-item active" data-view="user-dashboard" onclick="switchView(this,'user')"><span class="nav-icon">🏠</span> Dashboard</div>
         <div class="nav-item" data-view="user-tickets" onclick="switchView(this,'user')" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -26,8 +36,11 @@
         <!-- USER DASHBOARD -->
         <div class="view active" id="view-user-dashboard">
           <div class="welcome-bar">
-            <div><h3 id="u-welcome-name">Welcome back!</h3><p>Real-time status of your maintenance requests.</p></div>
-            <button class="btn btn-primary" style="width:auto; color: aliceblue;" onclick="goNewTicket()">+ Raise New Ticket</button>
+            <div>
+              <h3 id="u-welcome-name">Welcome back!</h3>
+              <p>Real-time status of your maintenance requests and active breakdown interventions.</p>
+            </div>
+            <button class="btn btn-primary" onclick="goNewTicket()">+ Raise New Ticket</button>
           </div>
           <div class="stats-grid">
             <div class="stat-card c-total"><div class="stat-label">Total Tickets</div><div class="stat-value" id="u-stat-total">—</div><div class="stat-sub">All time</div></div>
@@ -60,12 +73,12 @@
         <div class="view" id="view-user-tickets">
           <div class="page-header">
             <div><h2>My Tickets</h2><p>All maintenance tickets you have raised</p></div>
-            <button class="btn btn-primary" style="width:auto; color: aliceblue;" onclick="goNewTicket()">+ New Ticket</button>
+            <button class="btn btn-primary" onclick="goNewTicket()">+ New Ticket</button>
           </div>
           <div class="card">
             <div class="card-header">
-              <div class="filter-bar">
-                <input type="text" placeholder="Search tickets…" oninput="filterUserTickets()" id="u-search"/>
+              <div class="filter-bar" style="width: 100%;">
+                <input type="text" placeholder="Search tickets…" oninput="filterUserTickets()" id="u-search" style="width: 100%;"/>
               </div>
             </div>
             <table>
@@ -88,12 +101,12 @@
           </div>
         </div>
 
-        <!-- NEW TICKET FORM WITH PERMISSION GUARDS -->
+        <!-- NEW TICKET FORM -->
         <div class="view" id="view-user-new-ticket">
           <div class="page-header"><div><h2>Log Maintenance Event</h2><p>Record machine faults, times, and technical intervention details.</p></div></div>
           <div class="card" style="max-width:850px">
             <div class="card-header"><span class="card-title">Production &amp; Maintenance Logging Entry</span></div>
-            <div style="padding:1.6rem">
+            <div style="padding:1.4rem">
               
               <div class="form-row">
                 <div class="form-group" style="grid-column: span 2;">
@@ -173,7 +186,7 @@
               </div>
 
               <div class="form-row">
-                <div class="form-group"><label>Calculated Downtime (Mins)</label><input type="text" id="nt-downtime" placeholder="Total Downtime" readonly style="background:var(--surface3); font-weight:bold; color:var(--accent2);"/></div>
+                <div class="form-group"><label>Calculated Downtime</label><input type="text" id="nt-downtime" placeholder="Total Downtime" readonly style="background:var(--surface3); font-weight:bold; color:var(--accent2);"/></div>
                 <div class="form-group" id="f-perm-prod_loss"><label>Production Loss (Qty/Kg)</label><input type="text" id="nt-prod-loss" placeholder="e.g. 500 Sheets"/></div>
               </div>
 
@@ -204,8 +217,8 @@
                 <textarea id="nt-action-taken" rows="3" placeholder="Describe the physical work done to fix the issue..."></textarea>
               </div>
 
-              <div style="display:flex;gap:.75rem;margin-top:.5rem">
-                <button class="btn btn-primary" style="width:auto; color: aliceblue;" id="btn-submit-ticket" onclick="submitTicket()">Log / Save Ticket</button>
+              <div style="display:flex; gap:0.75rem; margin-top:0.8rem; flex-wrap:wrap;">
+                <button class="btn btn-primary" id="btn-submit-ticket" onclick="submitTicket()">Log / Save Ticket</button>
                 <button class="btn btn-secondary" onclick="clearNewTicket()">Clear Form</button>
               </div>
             </div>
@@ -215,7 +228,7 @@
         <!-- PROFILE -->
         <div class="view" id="view-user-profile">
           <div class="page-header"><div><h2>My Profile</h2><p>Your account details</p></div></div>
-          <div class="card" style="max-width:600px;padding:1.5rem"><div class="profile-card" id="u-profile-card"></div></div>
+          <div class="card" style="max-width:600px;padding:1.4rem"><div class="profile-card" id="u-profile-card"></div></div>
         </div>
       </div>
     </div>
