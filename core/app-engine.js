@@ -6,28 +6,30 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const { createClient }  = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const DEFAULT_USERS = {
-  Prem:    { name:'Prem Yerunkar',  dept:'IT Floor A',                 email:'prem.yerunkar@bytecrack.in',  phone:'9766423202', role:'Software Developer',             avatar: '/assets/prem.jpeg' },
-  Kuldeep: { name:'Kuldeep Singh',  dept:'Accounts & Human Resources', email:'kuldeep.singh@khetangroup.in',  phone:'9876543210', role:'Senior Accounts Executive', avatar: 'https://media.licdn.com/dms/image/v2/D4D03AQHt1s3Tja87EA/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1681965882013?e=2147483647&v=beta&t=nbRa2Bkvm8NI5-9pLe-dYZ-KlYwX29MF2rRoq6FWy-0' },
-  Ranjit:  { name:'Ranjit Singh',   dept:'Accounts',                   email:'ranjit.singh@gmail.com',   phone:'8805418158', role:'Accounts Executive',       avatar: 'https://media.licdn.com/dms/image/v2/D4D35AQGBwjQZsqx2EQ/profile-framedphoto-shrink_800_800/B4DZoB21.AGgAg-/0/1760967745688?e=1782986400&v=beta&t=wpZhZ8wvUq78BrX_5Ft1Eyf1DZ_3y7dhPxmfgkTc6KU' },
-  Suraj:   { name:'Suraj Koli',    dept:'Accounts',                   email:'suraj.koli@gmail.com',    phone:'9022728536', role:'Accounts Executive',       avatar: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Gorille_des_plaines_de_l%27ouest_%C3%A0_l%27Espace_Zoologique.jpg/250px-Gorille_des_plaines_de_l%27ouest_%C3%A0_l%27Espace_Zoologique.jpg' },
-};
-const DEFAULT_PASSWORDS = { Prem:'pass123', Kuldeep:'pass123', Ranjit:'pass123', Suraj:'pass123', admin:'admin123' };
-
 let currentUser = null;
 let currentRole = null;
+let currentUserProfile = null;
 let currentUserPermissions = null;
 let tickets = [];
 let machineInventory = [];
 let systemUsers = [];
 let realtimeChannel = null;
 let pollingInterval = null;
-let realtimeWorking = false;
 let currentView = '';
 let openModalTicketId = null;
 let loginType = 'user';
 
-// Core Dynamic Renderer
+// Analytics Date Filters
+let analyticsStartDate = null;
+let analyticsEndDate = null;
+let costAnalyticsStartDate = null;
+let costAnalyticsEndDate = null;
+let downtimeModalStartDate = null;
+let downtimeModalEndDate = null;
+let costModalStartDate = null;
+let costModalEndDate = null;
+
+// Core Dynamic View Loader
 async function loadView(viewName) {
   try {
     const res = await fetch(`features/${viewName}.html`);
@@ -35,7 +37,7 @@ async function loadView(viewName) {
     document.getElementById('view-mount-point').innerHTML = html;
     
     if(viewName === 'login-view') { 
-      switchLoginTab('user'); 
+      switchLoginTab(loginType || 'user'); 
       attachLoginKeyListeners();
     } else if(viewName === 'user-view') {
       applyUserFormPermissions();
@@ -68,12 +70,29 @@ window.addEventListener('DOMContentLoaded', () => { loadView('login-view'); });
 function switchLoginTab(t){
   loginType = t;
   document.querySelectorAll('.login-tab').forEach((x,i)=>x.classList.toggle('active',(t==='user'&&i===0)||(t==='admin'&&i===1)));
-  document.getElementById('login-form-user').style.display  = t==='user'  ? '' : 'none';
-  document.getElementById('login-form-admin').style.display = t==='admin' ? '' : 'none';
+  const userForm = document.getElementById('login-form-user');
+  const adminForm = document.getElementById('login-form-admin');
+  if (userForm) userForm.style.display = t === 'user' ? '' : 'none';
+  if (adminForm) adminForm.style.display = t === 'admin' ? '' : 'none';
+}
+
+function toggleMobileSidebar() {
+  const sidebar = document.getElementById('app-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (!sidebar) return;
+  
+  const isOpen = sidebar.classList.contains('mobile-open');
+  if (isOpen) {
+    sidebar.classList.remove('mobile-open');
+    if (overlay) overlay.classList.remove('active');
+  } else {
+    sidebar.classList.add('mobile-open');
+    if (overlay) overlay.classList.add('active');
+  }
 }
 
 // ══════════════════════════════════════════════
-// 🔐 DYNAMIC AUTHENTICATION & LOGIN ENGINE
+// 🔐 DATABASE AUTHENTICATION + EMERGENCY BACKDOOR
 // ══════════════════════════════════════════════
 async function doLogin(type){
   const usernameInput = document.getElementById(type === 'admin' ? 'admin-username' : 'user-username')?.value.trim();
@@ -84,95 +103,117 @@ async function doLogin(type){
     return;
   }
 
-  // 1. Query Supabase Database for Dynamic User
+  // 🚨 Emergency Master Backdoor: Immediate trigger for admin / admin123
+  if (type === 'admin' && usernameInput.toLowerCase() === 'admin' && passwordInput === 'admin123') {
+    currentUser = 'admin';
+    currentRole = 'admin';
+    currentUserPermissions = {};
+    currentUserProfile = {
+      name: 'System Administrator (Master)',
+      role: 'admin',
+      dept: 'IT Management',
+      email: 'admin@khetangroup.in',
+      phone: '—',
+      avatar: null,
+      permissions: {}
+    };
+
+    await loadView('admin-view');
+    currentView = 'admin-dashboard';
+    await loadAllTickets();
+    await loadMachineInventory();
+    await loadSystemUsers();
+    subscribeRealtime();
+    showToast('⚡ Emergency Admin Session Initialized');
+    return;
+  }
+
+  const btn = document.getElementById(type === 'admin' ? 'btn-login-admin' : 'btn-login-user');
+  const prevBtnText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Verifying...'; }
+
+  // Dynamic Database Authentication via Supabase
   const { data: dbUsers, error } = await db.from('system_users')
     .select('*')
     .ilike('username', usernameInput);
 
-  let authenticatedUser = null;
+  if (btn) { btn.disabled = false; btn.textContent = prevBtnText; }
 
-  if (!error && dbUsers && dbUsers.length > 0) {
-    const userMatch = dbUsers.find(u => u.password === passwordInput);
-    if (userMatch) {
-      if (type === 'admin' && userMatch.role !== 'admin') {
-        showToast('Access denied: User is not an Administrator', 'error');
-        return;
-      }
-      authenticatedUser = {
-        name: userMatch.full_name,
-        role: userMatch.role,
-        dept: userMatch.dept || 'Shopfloor Operations',
-        email: userMatch.email || '—',
-        phone: userMatch.phone || '—',
-        avatar: userMatch.avatar || null,
-        permissions: userMatch.permissions || {}
-      };
-      currentUser = userMatch.username;
-      currentRole = userMatch.role;
-      currentUserPermissions = userMatch.permissions;
-    }
+  if (error) {
+    showToast('Database connection error: ' + error.message, 'error');
+    return;
   }
 
-  // 2. Fallback to Local Hardcoded Credentials if DB record not present
-  if (!authenticatedUser) {
-    if (type === 'admin' && usernameInput.toLowerCase() === 'admin' && passwordInput === 'admin123') {
-      currentUser = 'admin';
-      currentRole = 'admin';
-      currentUserPermissions = {};
-      authenticatedUser = { name: 'Administrator', role: 'admin', dept: 'System Control', email: 'admin@khetangroup.in' };
-    } else if (type === 'user') {
-      const matchedKey = Object.keys(DEFAULT_USERS).find(k => k.toLowerCase() === usernameInput.toLowerCase());
-      if (matchedKey && DEFAULT_PASSWORDS[matchedKey] === passwordInput) {
-        currentUser = matchedKey;
-        currentRole = 'user';
-        currentUserPermissions = {
-          start_time: true, end_time: true, sub_component: true,
-          failure_mode: true, prod_loss: true, spare_part: true,
-          parts_cost: true, labour_cost: true, next_pm: true,
-          remarks: true, action_taken: true
-        };
-        authenticatedUser = DEFAULT_USERS[matchedKey];
-      }
-    }
+  if (!dbUsers || dbUsers.length === 0) {
+    showToast('Invalid credentials: user not found', 'error');
+    return;
   }
 
-  if (authenticatedUser) {
-    if (currentRole === 'admin') {
-      await loadView('admin-view');
-      currentView = 'admin-dashboard';
-      await loadAllTickets();
-      await loadMachineInventory();
-      await loadSystemUsers();
-      subscribeRealtime();
-    } else {
-      await loadView('user-view');
-      
-      document.getElementById('user-name-top').textContent = authenticatedUser.name;
-      if (authenticatedUser.avatar) {
-        document.getElementById('user-avatar-top').innerHTML = `<img src="${authenticatedUser.avatar}" alt="${authenticatedUser.name}">`;
-      } else {
-        document.getElementById('user-avatar-top').textContent = authenticatedUser.name[0];
-      }
-      document.getElementById('u-welcome-name').textContent = 'Welcome back, ' + authenticatedUser.name.split(' ')[0] + '!';
-      currentView = 'user-dashboard';
-      await loadAllTickets();
-      subscribeRealtime();
-    }
+  const userMatch = dbUsers.find(u => u.password === passwordInput);
+  if (!userMatch) {
+    showToast('Invalid password', 'error');
+    return;
+  }
+
+  if (type === 'admin' && userMatch.role !== 'admin') {
+    showToast('Access denied: User does not have Administrator privileges', 'error');
+    return;
+  }
+
+  currentUser = userMatch.username;
+  currentRole = userMatch.role || 'user';
+  currentUserPermissions = userMatch.permissions || {};
+  currentUserProfile = {
+    name: userMatch.full_name,
+    role: userMatch.role,
+    dept: userMatch.dept || 'Shopfloor Operations',
+    email: userMatch.email || '—',
+    phone: userMatch.phone || '—',
+    avatar: userMatch.avatar || null,
+    permissions: userMatch.permissions || {}
+  };
+
+  if (currentRole === 'admin') {
+    await loadView('admin-view');
+    currentView = 'admin-dashboard';
+    await loadAllTickets();
+    await loadMachineInventory();
+    await loadSystemUsers();
+    subscribeRealtime();
   } else {
-    showToast('Invalid username or password credentials', 'error');
+    await loadView('user-view');
+    const nameTop = document.getElementById('user-name-top');
+    const avatarTop = document.getElementById('user-avatar-top');
+    const welcomeName = document.getElementById('u-welcome-name');
+
+    if (nameTop) nameTop.textContent = currentUserProfile.name;
+    if (avatarTop) {
+      if (currentUserProfile.avatar) {
+        avatarTop.innerHTML = `<img src="${currentUserProfile.avatar}" alt="${currentUserProfile.name}">`;
+      } else {
+        avatarTop.textContent = currentUserProfile.name[0];
+      }
+    }
+    if (welcomeName) welcomeName.textContent = 'Welcome back, ' + currentUserProfile.name.split(' ')[0] + '!';
+    
+    currentView = 'user-dashboard';
+    await loadAllTickets();
+    subscribeRealtime();
   }
 }
 
 function logout(){
   if(realtimeChannel){ try{ db.removeChannel(realtimeChannel); }catch(e){} realtimeChannel = null; }
   if(pollingInterval){ clearInterval(pollingInterval); pollingInterval = null; }
-  currentUser = null; currentRole = null; currentUserPermissions = null; tickets = []; machineInventory = []; systemUsers = []; currentView = ''; openModalTicketId = null;
-  realtimeWorking = false;
+  currentUser = null; currentRole = null; currentUserProfile = null; currentUserPermissions = null; 
+  tickets = []; machineInventory = []; systemUsers = []; currentView = ''; openModalTicketId = null;
+  analyticsStartDate = null; analyticsEndDate = null; costAnalyticsStartDate = null; costAnalyticsEndDate = null;
+  downtimeModalStartDate = null; downtimeModalEndDate = null; costModalStartDate = null; costModalEndDate = null;
   loadView('login-view');
 }
 
 // ══════════════════════════════════════════════
-// ⏱️ ROBUST AUTOMATED DOWNTIME ENGINE
+// ⏱️ DOWNTIME CALCULATION ENGINE
 // ══════════════════════════════════════════════
 function calculateDowntime() {
   const startEl = document.getElementById('nt-start-time');
@@ -225,7 +266,7 @@ function attachDowntimeListeners() {
 }
 
 // ══════════════════════════════════════════════
-// 🔒 DYNAMIC CONTENT RIGHTS/PERMISSIONS DISPATCHER
+// 🔒 PERMISSIONS DISPATCHER
 // ══════════════════════════════════════════════
 function applyUserFormPermissions() {
   if (!currentUserPermissions || currentRole === 'admin') return;
@@ -244,7 +285,6 @@ function applyUserFormPermissions() {
     }
   });
 
-  // If user cannot manually modify start time, auto-fill it with current system time
   if (currentUserPermissions.start_time === false) {
     const startInput = document.getElementById('nt-start-time');
     if (startInput && !startInput.value) {
@@ -257,7 +297,7 @@ function applyUserFormPermissions() {
 }
 
 // ══════════════════════════════════════════════
-// 🛰️ REAL-TIME SYNC & BACKGROUND POLLING
+// 🛰️ DATA RETRIEVAL & REAL-TIME SYNC
 // ══════════════════════════════════════════════
 async function loadAllTickets(){
   let query = db.from('tickets_v2').select('*').order('created_at', { ascending: false });
@@ -283,16 +323,6 @@ async function loadSystemUsers(){
   }
 }
 
-function setIndicator(online){
-  const dotId   = currentRole === 'admin' ? 'rt-dot-admin'  : 'rt-dot-user';
-  const labelId = currentRole === 'admin' ? 'rt-label-admin' : 'rt-label-user';
-  const dot   = document.getElementById(dotId);
-  const label = document.getElementById(labelId);
-  if(!dot || !label) return;
-  label.textContent = online ? 'Live ⚡' : 'Syncing…';
-  dot.classList.toggle('offline', !online);
-}
-
 function subscribeRealtime(){
   if(realtimeChannel){ try{ db.removeChannel(realtimeChannel); }catch(e){} realtimeChannel = null; }
   startPolling();
@@ -302,10 +332,10 @@ function startPolling(){
   if(pollingInterval) clearInterval(pollingInterval);
   pollingInterval = setInterval(async () => {
     if(!currentRole) return;
-    loadAllTickets();
+    await loadAllTickets();
     if(currentRole === 'admin') {
-      loadMachineInventory();
-      loadSystemUsers();
+      await loadMachineInventory();
+      await loadSystemUsers();
     }
   }, 5000);
 }
@@ -333,7 +363,6 @@ async function submitTicket(){
   const failReason = document.getElementById('nt-maint-type').value.trim();
   
   let start = document.getElementById('nt-start-time').value;
-  // Fallback timestamp if start time was hidden/restricted
   if (!start) {
     const now = new Date();
     start = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -353,11 +382,11 @@ async function submitTicket(){
   const action = document.getElementById('nt-action-taken')?.value.trim() || '';
 
   if(!name || !comp || !failReason || !start){
-    showToast('Please fill out basic required configuration properties (*)','error'); return;
+    showToast('Please fill out basic required fields (*)','error'); return;
   }
 
   const tktId = 'TKT-' + String(Date.now()).slice(-6);
-  const operatorName = currentRole === 'admin' ? 'System Admin' : (DEFAULT_USERS[currentUser]?.name || currentUser);
+  const operatorName = currentUserProfile?.name || (currentRole === 'admin' ? 'System Admin' : currentUser);
   
   const timelineEvents = [
     { time: new Date().toISOString(), text: `Ticket initialized by ${operatorName}`, color: 'blue' }
@@ -393,15 +422,16 @@ async function submitTicket(){
   }]);
 
   btn.disabled = false; btn.textContent = '🚀 Log / Save Ticket';
-  if(error){ showToast('Failed: ' + error.message, 'error'); console.error(error); return; }
+  if(error){ showToast('Failed: ' + error.message, 'error'); return; }
 
   showToast(`Ticket ${tktId} logged successfully!`);
   clearNewTicket();
+  await loadAllTickets();
   switchView(document.querySelector('[data-view="user-tickets"]'), 'user');
 }
 
 // ══════════════════════════════════════════════
-// 📑 LIFECYCLE MANAGEMENT INTERVENTION MODAL
+// 📑 TICKET LIFECYCLE MODAL
 // ══════════════════════════════════════════════
 function viewTicket(id, panel){
   const t = tickets.find(x => x.id === id);
@@ -458,7 +488,7 @@ async function saveTicketCollaborative(id) {
   const t = tickets.find(x => x.id === id);
   if(!t) return;
 
-  const editorName = currentRole === 'admin' ? 'System Admin' : (DEFAULT_USERS[currentUser]?.name || currentUser);
+  const editorName = currentUserProfile?.name || (currentRole === 'admin' ? 'System Admin' : currentUser);
   const nextStatus = document.getElementById('md-status').value;
   const nextAction = document.getElementById('md-action').value.trim();
   const start = document.getElementById('md-start').value;
@@ -518,9 +548,9 @@ async function saveTicketCollaborative(id) {
 
   if(error) { showToast('Update fault: ' + error.message, 'error'); return; }
   
-  showToast('✔ System transaction processed successfully!');
+  showToast('✔ Ticket record updated successfully!');
   closeModal('modal-ticket');
-  loadAllTickets();
+  await loadAllTickets();
 }
 
 function clearNewTicket(){
@@ -533,15 +563,29 @@ function clearNewTicket(){
 }
 
 function switchView(el, panel){
-  const vid = el.dataset.view; currentView = vid;
+  const vid = el.dataset.view; 
+  currentView = vid;
   el.closest('.sidebar').querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
   el.closest('.app-shell').querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById('view-'+vid).classList.add('active');
   
+  const targetView = document.getElementById('view-'+vid);
+  if (targetView) targetView.classList.add('active');
+  
+  const sidebar = document.getElementById('app-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (sidebar && sidebar.classList.contains('mobile-open')) {
+    sidebar.classList.remove('mobile-open');
+    if (overlay) overlay.classList.remove('active');
+  }
+
   if (vid === 'user-new-ticket') {
     applyUserFormPermissions();
     attachDowntimeListeners();
+  }
+  
+  if (vid === 'admin-analytics') {
+    setTimeout(() => { executeAnalyticsDashboardGeneration(); }, 60);
   }
   
   refreshAllUI();
@@ -700,7 +744,7 @@ function renderUsers(){ refreshAdminData(); renderSystemUsersTable(); }
 function renderAnalytics(){ refreshAdminData(); executeAnalyticsDashboardGeneration(); }
 
 // ══════════════════════════════════════════════
-// 👥 USER MANAGEMENT & PERMISSION RIGHTS ENGINE
+// 👥 USER MANAGEMENT & PERMISSION RIGHTS
 // ══════════════════════════════════════════════
 function clearUserForm() {
   document.getElementById('usr-fullname').value = '';
@@ -729,7 +773,7 @@ function editSystemUser(username) {
 
   document.getElementById('usr-fullname').value = user.full_name || '';
   document.getElementById('usr-username').value = user.username || '';
-  document.getElementById('usr-username').readOnly = true; // Protect username uniqueness
+  document.getElementById('usr-username').readOnly = true;
   document.getElementById('usr-password').value = user.password || '';
   document.getElementById('usr-role').value = user.role || 'user';
   document.getElementById('usr-dept').value = user.dept || '';
@@ -748,7 +792,6 @@ function editSystemUser(username) {
     }
   });
 
-  // Scroll to user registration form smoothly
   document.getElementById('usr-fullname').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -799,7 +842,7 @@ async function saveSystemUser() {
     return;
   }
 
-  showToast(`✅ User "${name}" configured with custom rights!`);
+  showToast(`✅ User "${name}" configured successfully!`);
   clearUserForm();
   await loadSystemUsers();
 }
@@ -808,34 +851,15 @@ function renderSystemUsersTable() {
   const userTable = document.getElementById('a-users-tbody');
   if (!userTable) return;
 
-  const combinedUsers = [...systemUsers];
-
-  // Merge default fallback directory if not present in DB
-  Object.keys(DEFAULT_USERS).forEach(key => {
-    if (!combinedUsers.find(u => u.username && u.username.toLowerCase() === key.toLowerCase())) {
-      const u = DEFAULT_USERS[key];
-      combinedUsers.push({
-        id: 'default-' + key,
-        full_name: u.name,
-        username: key,
-        password: DEFAULT_PASSWORDS[key] || 'pass123',
-        role: key.toLowerCase() === 'admin' ? 'admin' : 'user',
-        dept: u.dept,
-        permissions: { start_time: true, end_time: true, sub_component: true, failure_mode: true, prod_loss: true, spare_part: true, parts_cost: true, labour_cost: true, next_pm: true, remarks: true, action_taken: true }
-      });
-    }
-  });
-
-  userTable.innerHTML = combinedUsers.length
-    ? combinedUsers.map(u => {
+  userTable.innerHTML = systemUsers.length
+    ? systemUsers.map(u => {
         const permsCount = u.permissions ? Object.values(u.permissions).filter(Boolean).length : 11;
-        const isDbUser = !String(u.id).startsWith('default-');
         return `
           <tr>
             <td>
               <div style="display:flex; align-items:center; gap:0.5rem;">
-                <div class="avatar" style="width:32px; height:32px; font-size:0.85rem; background:var(--accent2); color:white; display:flex; align-items:center; justify-content:center; border-radius:50%;">${u.full_name[0]}</div>
-                <div><strong>${u.full_name}</strong></div>
+                <div class="avatar" style="width:32px; height:32px; font-size:0.85rem; background:var(--accent2); color:white; display:flex; align-items:center; justify-content:center; border-radius:50%;">${u.full_name ? u.full_name[0] : 'U'}</div>
+                <div><strong>${u.full_name || u.username}</strong></div>
               </div>
             </td>
             <td><code>${u.username}</code></td>
@@ -844,12 +868,12 @@ function renderSystemUsersTable() {
             <td><span class="badge badge-received">${permsCount} Rights Allowed</span></td>
             <td style="display:flex; gap:0.4rem;">
               <button class="btn btn-secondary btn-sm" onclick="editSystemUser('${u.username}')">Edit</button>
-              ${isDbUser ? `<button class="btn btn-secondary btn-sm" onclick="deleteSystemUser('${u.id}')" style="color:var(--danger); border-color:var(--danger);">Delete</button>` : ''}
+              <button class="btn btn-secondary btn-sm" onclick="deleteSystemUser('${u.id}')" style="color:var(--danger); border-color:var(--danger);">Delete</button>
             </td>
           </tr>
         `;
       }).join('')
-    : '<tr><td colspan="6"><div class="empty-state">No registered user profiles.</div></td></tr>';
+    : '<tr><td colspan="6"><div class="empty-state">No users registered in database yet. Add one above!</div></td></tr>';
 }
 
 async function deleteSystemUser(id) {
@@ -1034,11 +1058,24 @@ String.prototype.hashCode = function() {
 };
 
 // ══════════════════════════════════════════════
-// 📈 ANALYTICS & NATIVE GRAPHICS CHARTS
+// 📈 DYNAMIC REAL-TIME ANALYTICS DASHBOARD
 // ══════════════════════════════════════════════
+function ensureCanvasDimensions(canvas, defaultW, defaultH) {
+  if (!canvas) return { W: defaultW, H: defaultH };
+  const parent = canvas.parentElement;
+  const computedW = parent ? parent.getBoundingClientRect().width - 32 : defaultW;
+  const w = computedW > 100 ? Math.floor(computedW) : defaultW;
+  const h = defaultH;
+  canvas.width = w;
+  canvas.height = h;
+  return { W: w, H: h };
+}
+
 function executeAnalyticsDashboardGeneration() {
   const machineCounts = {};
-  tickets.forEach(t => { if(t.machine_name) machineCounts[t.machine_name] = (machineCounts[t.machine_name] || 0) + 1; });
+  tickets.forEach(t => { 
+    if(t.machine_name) machineCounts[t.machine_name] = (machineCounts[t.machine_name] || 0) + 1; 
+  });
   const sortedMachines = Object.entries(machineCounts).sort((a,b) => b[1] - a[1]).slice(0, 5);
   
   const listContainer = document.getElementById('top-machines-list');
@@ -1046,7 +1083,7 @@ function executeAnalyticsDashboardGeneration() {
     listContainer.innerHTML = sortedMachines.length
       ? sortedMachines.map(([name, count]) => `
           <div style="margin-bottom: 0.75rem;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem; font-size:0.9rem;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem; font-size:0.85rem;">
               <span style="font-weight:600;">🔧 ${name}</span>
               <span style="color:var(--text-muted); font-weight:700;">${count} Tickets</span>
             </div>
@@ -1054,7 +1091,7 @@ function executeAnalyticsDashboardGeneration() {
               <div style="background:var(--accent2); height:100%; width: ${Math.min((count / (tickets.length || 1)) * 100, 100)}%;"></div>
             </div>
           </div>`).join('')
-      : '<div class="empty-state">No log operations running.</div>';
+      : '<div class="empty-state">No recorded tickets.</div>';
   }
 
   drawNativePieChart('chart-status-pie', 'legend-status-pie', {
@@ -1064,27 +1101,23 @@ function executeAnalyticsDashboardGeneration() {
     'Resolved': tickets.filter(t => t.status === 'Resolved / Done').length,
   }, ['#ef4444', '#3b82f6', '#f59e0b', '#10b981'], false);
 
-  drawNativeBarChart('chart-issue-bar', {
-    'Mechanical': tickets.filter(t => String(t.machine_component).toLowerCase().includes('mech') || String(t.failure_mode).toLowerCase().includes('break') || String(t.remarks).toLowerCase().includes('leak')).length,
-    'Electrical': tickets.filter(t => String(t.machine_component).toLowerCase().includes('elect') || String(t.machine_component).toLowerCase().includes('wire') || String(t.machine_component).toLowerCase().includes('sensor')).length,
-    'Pneumatic': tickets.filter(t => String(t.machine_component).toLowerCase().includes('pneu') || String(t.machine_component).toLowerCase().includes('air') || String(t.machine_component).toLowerCase().includes('valve')).length,
-    'Other Setup': tickets.filter(t => !t.machine_component || (!String(t.machine_component).toLowerCase().includes('mech') && !String(t.machine_component).toLowerCase().includes('elect') && !String(t.machine_component).toLowerCase().includes('pneu'))).length
-  }, '#6366f1');
+  const failureModeCounts = {};
+  tickets.forEach(t => {
+    const mode = t.failure_mode || 'General Breakdown';
+    failureModeCounts[mode] = (failureModeCounts[mode] || 0) + 1;
+  });
+  const topFailureModes = Object.fromEntries(
+    Object.entries(failureModeCounts).sort((a,b) => b[1] - a[1]).slice(0, 4)
+  );
+  drawNativeBarChart('chart-issue-bar', Object.keys(topFailureModes).length ? topFailureModes : { 'General Breakdown': tickets.length }, '#6366f1');
 
+  const unhandledCount = tickets.filter(t => t.status !== 'Resolved / Done').length;
+  const resolvedCount = tickets.filter(t => t.status === 'Resolved / Done').length;
   drawNativePieChart('chart-priority-donut', 'legend-priority-donut', {
-    'Critical (Unresolved)': tickets.filter(t => t.status !== 'Resolved / Done').length,
-    'Normal': tickets.filter(t => t.status === 'Resolved / Done').length
-  }, ['#dc2626', '#fbbf24'], true);
+    'Active Unresolved': unhandledCount,
+    'Resolved Closed': resolvedCount
+  }, ['#dc2626', '#10b981'], true);
 
-  const machineBarData = {};
-  sortedMachines.forEach(([name, count]) => { machineBarData[name.substring(0,10)] = count; });
-  drawNativeBarChart('chart-machine-bar', machineBarData, '#0d9488');
-
-  const userBarData = {};
-  tickets.forEach(t => { const name = (t.reported_by || 'Unknown').split(' ')[0]; userBarData[name] = (userBarData[name] || 0) + 1; });
-  drawNativeBarChart('chart-user-bar', userBarData, '#ec4899');
-
-  drawStackedMachineHealthChart('chart-stacked-bar', 'legend-stacked', sortedMachines);
   drawMachineDowntimeChart('chart-machine-downtime');
   drawMachineCostChart('chart-machine-cost');
 }
@@ -1093,20 +1126,30 @@ function drawNativePieChart(canvasId, legendId, data, colors, isDonut = false) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-  const total = Object.values(data).reduce((a, b) => a + b, 0) || 1;
-  let startAngle = 0;
+  const { W, H } = ensureCanvasDimensions(canvas, 260, 210);
+  ctx.clearRect(0, 0, W, H);
+  
+  const total = Object.values(data).reduce((a, b) => a + b, 0);
   const keys = Object.keys(data);
   
+  if (total === 0) {
+    ctx.fillStyle = '#64748b';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No data recorded', W / 2, H / 2);
+    return;
+  }
+
+  let startAngle = -0.5 * Math.PI;
   keys.forEach((key, idx) => {
     const val = data[key];
     const sliceAngle = (val / total) * 2 * Math.PI;
-    if(sliceAngle === 0) return;
+    if(sliceAngle <= 0) return;
     
     ctx.beginPath();
-    ctx.arc(canvas.width/2, canvas.height/2, Math.min(canvas.width, canvas.height)/2 - 12, startAngle, startAngle + sliceAngle);
-    ctx.lineTo(canvas.width/2, canvas.height/2);
+    ctx.arc(W / 2, H / 2, Math.min(W, H) / 2 - 14, startAngle, startAngle + sliceAngle);
+    ctx.lineTo(W / 2, H / 2);
     ctx.fillStyle = colors[idx % colors.length];
     ctx.fill();
     startAngle += sliceAngle;
@@ -1114,7 +1157,7 @@ function drawNativePieChart(canvasId, legendId, data, colors, isDonut = false) {
 
   if (isDonut) {
     ctx.beginPath();
-    ctx.arc(canvas.width/2, canvas.height/2, Math.min(canvas.width, canvas.height)/4, 0, 2 * Math.PI);
+    ctx.arc(W / 2, H / 2, Math.min(W, H) / 4, 0, 2 * Math.PI);
     ctx.fillStyle = '#ffffff';
     ctx.fill();
   }
@@ -1122,9 +1165,9 @@ function drawNativePieChart(canvasId, legendId, data, colors, isDonut = false) {
   const legend = document.getElementById(legendId);
   if(legend) {
     legend.innerHTML = keys.map((k, i) => `
-      <span style="display:inline-flex; align-items:center; margin-right:0.75rem; font-size:0.75rem; font-weight:500;">
-        <span style="display:inline-block; width:10px; height:10px; background:${colors[i%colors.length]}; border-radius:2px; margin-right:4px;"></span>
-        ${k} (${data[k]})
+      <span style="display:inline-flex; align-items:center; margin-right:0.6rem; font-size:0.75rem; font-weight:600;">
+        <span style="display:inline-block; width:9px; height:9px; background:${colors[i%colors.length]}; border-radius:2px; margin-right:4px;"></span>
+        ${k} (${data[k] || 0})
       </span>`).join('');
   }
 }
@@ -1133,92 +1176,151 @@ function drawNativeBarChart(canvasId, data, color) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const { W, H } = ensureCanvasDimensions(canvas, 420, 240);
+  ctx.clearRect(0, 0, W, H);
 
   const values = Object.values(data);
   const keys = Object.keys(data);
   const maxVal = Math.max(...values, 1);
   
-  const paddingBottom = 25;
-  const paddingTop = 20;
+  const paddingBottom = 30;
+  const paddingTop = 25;
   const paddingSide = 30;
-  const chartHeight = canvas.height - paddingBottom - paddingTop;
-  const barWidth = (canvas.width - paddingSide * 2) / (values.length || 1) - 12;
+  const chartHeight = H - paddingBottom - paddingTop;
+  const barWidth = Math.max(16, (W - paddingSide * 2) / (values.length || 1) - 16);
 
   keys.forEach((key, idx) => {
-    const val = values[idx];
+    const val = values[idx] || 0;
     const barHeight = (val / maxVal) * chartHeight;
-    const x = paddingSide + idx * (barWidth + 12);
-    const y = canvas.height - paddingBottom - barHeight;
+    const x = paddingSide + idx * (barWidth + 16);
+    const y = H - paddingBottom - barHeight;
 
     ctx.fillStyle = color;
     ctx.fillRect(x, y, barWidth, barHeight);
 
     ctx.fillStyle = '#6b7280';
-    ctx.font = '10px sans-serif';
+    ctx.font = '10px Tahoma, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(key.substring(0, 9), x + barWidth/2, canvas.height - 8);
+    ctx.fillText(key.substring(0, 10), x + barWidth / 2, H - 10);
     
-    ctx.fillStyle = '#111827';
-    ctx.fillText(val, x + barWidth/2, y - 6);
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 11px Tahoma, sans-serif';
+    ctx.fillText(val, x + barWidth / 2, y - 6);
   });
 }
 
-function drawStackedMachineHealthChart(canvasId, legendId, topMachines) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+// ══════════════════════════════════════════════
+// ⏱️ DOWNTIME CALENDAR & GRAPH ENGINE
+// ══════════════════════════════════════════════
+function applyAnalyticsDateFilter() {
+  analyticsStartDate = document.getElementById('analytics-date-start')?.value || null;
+  analyticsEndDate = document.getElementById('analytics-date-end')?.value || null;
+  drawMachineDowntimeChart('chart-machine-downtime');
+}
 
-  const paddingBottom = 30;
-  const paddingSide = 50;
-  const chartWidth = canvas.width - paddingSide * 2;
-  const chartHeight = canvas.height - paddingBottom - 20;
-  const barWidth = chartWidth / (topMachines.length || 1) - 30;
+function resetAnalyticsDateFilter() {
+  const s = document.getElementById('analytics-date-start');
+  const e = document.getElementById('analytics-date-end');
+  if (s) s.value = '';
+  if (e) e.value = '';
+  analyticsStartDate = null;
+  analyticsEndDate = null;
+  drawMachineDowntimeChart('chart-machine-downtime');
+}
 
-  let globalMax = 1;
-  const machineMetrics = topMachines.map(([name]) => {
-    const open = tickets.filter(t => t.machine_name === name && t.status !== 'Resolved / Done').length;
-    const resolved = tickets.filter(t => t.machine_name === name && t.status === 'Resolved / Done').length;
-    if ((open + resolved) > globalMax) globalMax = open + resolved;
-    return { name: name.substring(0, 12), open, resolved };
-  });
+function openDowntimeDetailsModal() {
+  const s = document.getElementById('dt-modal-date-start');
+  const e = document.getElementById('dt-modal-date-end');
+  if (s) s.value = analyticsStartDate || '';
+  if (e) e.value = analyticsEndDate || '';
+  downtimeModalStartDate = analyticsStartDate;
+  downtimeModalEndDate = analyticsEndDate;
+  renderDowntimeModalTable();
+  openModal('modal-downtime-details');
+}
 
-  machineMetrics.forEach((m, idx) => {
-    const totalCount = m.open + m.resolved;
-    const x = paddingSide + idx * (barWidth + 30);
-    const openHeight = (m.open / globalMax) * chartHeight;
-    const resolvedHeight = (m.resolved / globalMax) * chartHeight;
+function applyDowntimeModalDateFilter() {
+  downtimeModalStartDate = document.getElementById('dt-modal-date-start')?.value || null;
+  downtimeModalEndDate = document.getElementById('dt-modal-date-end')?.value || null;
+  renderDowntimeModalTable();
+}
 
-    const yResolved = canvas.height - paddingBottom - resolvedHeight;
-    ctx.fillStyle = '#10b981';
-    ctx.fillRect(x, yResolved, barWidth, resolvedHeight);
+function resetDowntimeModalDateFilter() {
+  const s = document.getElementById('dt-modal-date-start');
+  const e = document.getElementById('dt-modal-date-end');
+  if (s) s.value = '';
+  if (e) e.value = '';
+  downtimeModalStartDate = null;
+  downtimeModalEndDate = null;
+  renderDowntimeModalTable();
+}
 
-    const yOpen = yResolved - openHeight;
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(x, yOpen, barWidth, openHeight);
+function renderDowntimeModalTable() {
+  const tbody = document.getElementById('dt-details-tbody');
+  const minFilter = document.getElementById('dt-modal-min-filter')?.value || 'ALL';
+  if (!tbody) return;
 
-    ctx.fillStyle = '#4b5563';
-    ctx.font = '11px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(m.name, x + barWidth / 2, canvas.height - 12);
-    
-    if (totalCount > 0) {
-      ctx.fillStyle = '#111827';
-      ctx.fillText(totalCount, x + barWidth / 2, yOpen - 6);
+  let filtered = [...tickets].filter(t => t.downtime && parseInt(t.downtime) > 0);
+
+  if (downtimeModalStartDate) {
+    const startMs = new Date(downtimeModalStartDate).setHours(0,0,0,0);
+    filtered = filtered.filter(t => new Date(t.created_at).getTime() >= startMs);
+  }
+  if (downtimeModalEndDate) {
+    const endMs = new Date(downtimeModalEndDate).setHours(23,59,59,999);
+    filtered = filtered.filter(t => new Date(t.created_at).getTime() <= endMs);
+  }
+
+  const totalMins = filtered.reduce((acc, t) => acc + parseInt(t.downtime || 0), 0);
+  const criticalCount = filtered.filter(t => parseInt(t.downtime || 0) >= 60).length;
+
+  const machineDowntimeMap = {};
+  filtered.forEach(t => {
+    if (t.machine_name) {
+      machineDowntimeMap[t.machine_name] = (machineDowntimeMap[t.machine_name] || 0) + parseInt(t.downtime || 0);
     }
   });
 
-  const legend = document.getElementById(legendId);
-  if (legend) {
-    legend.innerHTML = `
-      <span style="display:inline-flex; align-items:center; margin-right:1rem; font-size:0.8rem;">
-        <span style="display:inline-block; width:12px; height:12px; background:#ef4444; border-radius:2px; margin-right:4px;"></span> Open Issues
-      </span>
-      <span style="display:inline-flex; align-items:center; font-size:0.8rem;">
-        <span style="display:inline-block; width:12px; height:12px; background:#10b981; border-radius:2px; margin-right:4px;"></span> Resolved
-      </span>`;
+  const sortedTop = Object.entries(machineDowntimeMap).sort((a,b) => b[1] - a[1]);
+  const topMachineName = sortedTop.length ? sortedTop[0][0] : '—';
+  const topMachineMins = sortedTop.length ? sortedTop[0][1] : 0;
+
+  if (document.getElementById('dt-kpi-total-mins')) document.getElementById('dt-kpi-total-mins').textContent = `${totalMins.toLocaleString()} min`;
+  if (document.getElementById('dt-kpi-total-hrs')) document.getElementById('dt-kpi-total-hrs').textContent = `${(totalMins / 60).toFixed(1)} Hours lost`;
+  if (document.getElementById('dt-kpi-high-count')) document.getElementById('dt-kpi-high-count').textContent = criticalCount;
+  if (document.getElementById('dt-kpi-top-machine')) document.getElementById('dt-kpi-top-machine').textContent = topMachineName;
+  if (document.getElementById('dt-kpi-top-machine-sub')) document.getElementById('dt-kpi-top-machine-sub').textContent = sortedTop.length ? `${topMachineMins} mins total breakdown` : 'No bottlenecks identified';
+
+  if (minFilter === 'GT30') {
+    filtered = filtered.filter(t => parseInt(t.downtime || 0) >= 30);
+  } else if (minFilter === 'GT60') {
+    filtered = filtered.filter(t => parseInt(t.downtime || 0) >= 60);
   }
+
+  filtered.sort((a,b) => parseInt(b.downtime || 0) - parseInt(a.downtime || 0));
+
+  tbody.innerHTML = filtered.length
+    ? filtered.map(t => {
+        const d = parseInt(t.downtime || 0);
+        return `
+          <tr onclick="viewTicket('${t.id}', 'admin')" style="cursor:pointer;">
+            <td><span class="ticket-id">${t.ticket_id}</span></td>
+            <td><strong>${t.machine_name || '—'}</strong></td>
+            <td>
+              <span class="badge ${d >= 60 ? 'badge-cannotfix' : (d >= 30 ? 'badge-pending' : 'badge-open')}">
+                ${d} mins (${(d/60).toFixed(1)}h)
+              </span>
+            </td>
+            <td>${t.production_loss || '—'}</td>
+            <td><small style="color:var(--text-muted);">${t.failure_mode || 'Mechanical'}</small></td>
+            <td>${statusBadge(t.status)}</td>
+            <td>${fmtDate(t.created_at)}</td>
+            <td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); viewTicket('${t.id}','admin')">Manage</button></td>
+          </tr>
+        `;
+      }).join('')
+    : '<tr><td colspan="8"><div class="empty-state">No matching stoppage logs found in the selected date window.</div></td></tr>';
 }
 
 function drawMachineDowntimeChart(canvasId) {
@@ -1226,28 +1328,35 @@ function drawMachineDowntimeChart(canvasId) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   
-  const W = canvas.offsetWidth || canvas.width;
-  const H = canvas.height;
-  canvas.width = W;
+  const { W, H } = ensureCanvasDimensions(canvas, 860, 260);
   ctx.clearRect(0, 0, W, H);
 
+  let filtered = [...tickets].filter(t => t.machine_name && t.downtime && parseInt(t.downtime) > 0);
+
+  if (analyticsStartDate) {
+    const sMs = new Date(analyticsStartDate).setHours(0,0,0,0);
+    filtered = filtered.filter(t => new Date(t.created_at).getTime() >= sMs);
+  }
+  if (analyticsEndDate) {
+    const eMs = new Date(analyticsEndDate).setHours(23,59,59,999);
+    filtered = filtered.filter(t => new Date(t.created_at).getTime() <= eMs);
+  }
+
   const downtimeMap = {};
-  tickets.forEach(t => {
-    if (t.machine_name && t.downtime) {
-      downtimeMap[t.machine_name] = (downtimeMap[t.machine_name] || 0) + parseInt(t.downtime);
-    }
+  filtered.forEach(t => {
+    downtimeMap[t.machine_name] = (downtimeMap[t.machine_name] || 0) + parseInt(t.downtime);
   });
 
-  const sortedData = Object.entries(downtimeMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const sortedData = Object.entries(downtimeMap).sort((a, b) => b[1] - a[1]).slice(0, 6);
   if (!sortedData.length) {
     ctx.fillStyle = '#64748b';
-    ctx.font = '14px sans-serif';
+    ctx.font = '13px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('No recorded downtime logs to compile graphics chart.', W / 2, H / 2);
+    ctx.fillText('No recorded downtime logs available.', W / 2, H / 2);
     return;
   }
 
-  const pad = { t: 30, r: 40, b: 55, l: 120 };
+  const pad = { t: 25, r: 60, b: 45, l: 140 };
   const cW = W - pad.l - pad.r;
   const cH = H - pad.t - pad.b;
   
@@ -1275,13 +1384,16 @@ function drawMachineDowntimeChart(canvasId) {
     const x = pad.l;
     const y = pad.t + idx * stepY + (stepY / 2) - (barHeight / 2);
 
-    ctx.fillStyle = 'rgb(5, 37, 80)';
+    const grad = ctx.createLinearGradient(x, y, x + barWidth, y);
+    grad.addColorStop(0, '#ea580c');
+    grad.addColorStop(1, 'rgb(5, 37, 80)');
+    ctx.fillStyle = grad;
     ctx.fillRect(x, y, barWidth, barHeight);
 
     ctx.fillStyle = '#475569';
     ctx.font = 'bold 11px Tahoma, sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText(name.substring(0, 16), x - 10, y + barHeight / 2 + 4);
+    ctx.fillText(name.substring(0, 18), x - 10, y + barHeight / 2 + 4);
 
     ctx.fillStyle = '#0f172a';
     ctx.font = 'bold 11px Tahoma, sans-serif';
@@ -1290,38 +1402,91 @@ function drawMachineDowntimeChart(canvasId) {
   });
 }
 
+// ══════════════════════════════════════════════
+// 💰 FINANCIAL COST CALENDAR & GRAPH ENGINE
+// ══════════════════════════════════════════════
+function applyCostAnalyticsDateFilter() {
+  costAnalyticsStartDate = document.getElementById('cost-date-start')?.value || null;
+  costAnalyticsEndDate = document.getElementById('cost-date-end')?.value || null;
+  drawMachineCostChart('chart-machine-cost');
+}
+
+function resetCostAnalyticsDateFilter() {
+  const s = document.getElementById('cost-date-start');
+  const e = document.getElementById('cost-date-end');
+  if (s) s.value = '';
+  if (e) e.value = '';
+  costAnalyticsStartDate = null;
+  costAnalyticsEndDate = null;
+  drawMachineCostChart('chart-machine-cost');
+}
+
+function openCostDetailsModal() {
+  const s = document.getElementById('cost-modal-date-start');
+  const e = document.getElementById('cost-modal-date-end');
+  if (s) s.value = costAnalyticsStartDate || '';
+  if (e) e.value = costAnalyticsEndDate || '';
+  costModalStartDate = costAnalyticsStartDate;
+  costModalEndDate = costAnalyticsEndDate;
+  renderCostModalTable();
+  openModal('modal-cost-details');
+}
+
+function applyCostModalDateFilter() {
+  costModalStartDate = document.getElementById('cost-modal-date-start')?.value || null;
+  costModalEndDate = document.getElementById('cost-modal-date-end')?.value || null;
+  renderCostModalTable();
+}
+
+function resetCostModalDateFilter() {
+  const s = document.getElementById('cost-modal-date-start');
+  const e = document.getElementById('cost-modal-date-end');
+  if (s) s.value = '';
+  if (e) e.value = '';
+  costModalStartDate = null;
+  costModalEndDate = null;
+  renderCostModalTable();
+}
+
 function drawMachineCostChart(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   
-  const W = canvas.offsetWidth || canvas.width;
-  const H = canvas.height;
-  canvas.width = W;
+  const { W, H } = ensureCanvasDimensions(canvas, 860, 260);
   ctx.clearRect(0, 0, W, H);
 
+  let filtered = [...tickets].filter(t => t.machine_name);
+
+  if (costAnalyticsStartDate) {
+    const sMs = new Date(costAnalyticsStartDate).setHours(0,0,0,0);
+    filtered = filtered.filter(t => new Date(t.created_at).getTime() >= sMs);
+  }
+  if (costAnalyticsEndDate) {
+    const eMs = new Date(costAnalyticsEndDate).setHours(23,59,59,999);
+    filtered = filtered.filter(t => new Date(t.created_at).getTime() <= eMs);
+  }
+
   const costMap = {};
-  tickets.forEach(t => {
-    if (t.machine_name) {
-      const parts = parseFloat(t.parts_cost) || 0;
-      const labour = parseFloat(t.labour_cost) || 0;
-      const total = parts + labour;
-      if (total > 0) {
-        costMap[t.machine_name] = (costMap[t.machine_name] || 0) + total;
-      }
+  filtered.forEach(t => {
+    const parts = parseFloat(t.parts_cost) || 0;
+    const labour = parseFloat(t.labour_cost) || 0;
+    const total = parts + labour;
+    if (total > 0) {
+      costMap[t.machine_name] = (costMap[t.machine_name] || 0) + total;
     }
   });
 
-  const sortedCosts = Object.entries(costMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const sortedCosts = Object.entries(costMap).sort((a, b) => b[1] - a[1]).slice(0, 6);
   if (!sortedCosts.length) {
     ctx.fillStyle = '#64748b';
-    ctx.font = '14px sans-serif';
+    ctx.font = '13px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('No recorded spare parts or labour expenses found in tickets.', W / 2, H / 2);
+    ctx.fillText('No recorded repair cost data available.', W / 2, H / 2);
     return;
   }
 
-  const pad = { t: 30, r: 60, b: 55, l: 130 };
+  const pad = { t: 25, r: 70, b: 45, l: 140 };
   const cW = W - pad.l - pad.r;
   const cH = H - pad.t - pad.b;
   
@@ -1368,21 +1533,27 @@ function drawMachineCostChart(canvasId) {
   });
 }
 
-function openCostDetailsModal() {
-  renderCostModalTable();
-  openModal('modal-cost-details');
-}
-
 function renderCostModalTable() {
   const tbody = document.getElementById('cost-details-tbody');
   const filterVal = document.getElementById('cost-modal-status-filter')?.value || 'ALL';
   if (!tbody) return;
 
+  let displayTickets = [...tickets];
+
+  if (costModalStartDate) {
+    const sMs = new Date(costModalStartDate).setHours(0,0,0,0);
+    displayTickets = displayTickets.filter(t => new Date(t.created_at).getTime() >= sMs);
+  }
+  if (costModalEndDate) {
+    const eMs = new Date(costModalEndDate).setHours(23,59,59,999);
+    displayTickets = displayTickets.filter(t => new Date(t.created_at).getTime() <= eMs);
+  }
+
   let totalUnresolved = 0;
   let totalResolved = 0;
   let grandTotal = 0;
 
-  tickets.forEach(t => {
+  displayTickets.forEach(t => {
     const p = parseFloat(t.parts_cost) || 0;
     const l = parseFloat(t.labour_cost) || 0;
     const tCost = p + l;
@@ -1398,7 +1569,6 @@ function renderCostModalTable() {
   if (document.getElementById('cost-kpi-resolved')) document.getElementById('cost-kpi-resolved').textContent = '₹' + totalResolved.toLocaleString('en-IN');
   if (document.getElementById('cost-kpi-total')) document.getElementById('cost-kpi-total').textContent = '₹' + grandTotal.toLocaleString('en-IN');
 
-  let displayTickets = [...tickets];
   if (filterVal === 'UNRESOLVED') {
     displayTickets = displayTickets.filter(t => t.status !== 'Resolved / Done');
   } else if (filterVal === 'RESOLVED') {
@@ -1419,27 +1589,28 @@ function renderCostModalTable() {
             <td>₹${p.toLocaleString('en-IN')}</td>
             <td>₹${l.toLocaleString('en-IN')}</td>
             <td><strong style="color: ${t.status === 'Resolved / Done' ? 'var(--accent3)' : 'var(--danger)'};">₹${tCost.toLocaleString('en-IN')}</strong></td>
+            <td>${fmtDate(t.created_at)}</td>
           </tr>
         `;
       }).join('')
-    : '<tr><td colspan="7"><div class="empty-state">No matching expense logs found.</div></td></tr>';
+    : '<tr><td colspan="8"><div class="empty-state">No matching expense logs found in this date window.</div></td></tr>';
 }
 
 function renderUserProfile(){
-  const info = DEFAULT_USERS[currentUser] || systemUsers.find(u => u.username === currentUser) || { name: currentUser, role: currentRole, dept: 'Operations' };
+  const info = currentUserProfile || { name: currentUser || 'User', role: currentRole || 'user', dept: 'Operations' };
   const profileCard = document.getElementById('u-profile-card');
   if(!profileCard) return;
 
   profileCard.innerHTML = `
-    <div style="display:flex; align-items:center; gap:1.5rem;">
+    <div style="display:flex; align-items:center; gap:1.4rem;">
       <div class="profile-avatar">
-        ${info.avatar ? `<img src="${info.avatar}" alt="${info.name}">` : info.name[0]}
+        ${info.avatar ? `<img src="${info.avatar}" alt="${info.name}">` : (info.name ? info.name[0] : 'U')}
       </div>
       <div>
         <div class="profile-name" style="font-size:1.25rem; font-weight:700;">${info.name}</div>
-        <div class="profile-role" style="color:var(--text-muted); margin-bottom:0.5rem;">${info.role} · ${info.dept}</div>
-        <div style="font-size:0.9rem; color:var(--text-muted);">📧 ${info.email || '—'}</div>
-        <div style="font-size:0.9rem; color:var(--text-muted);">📞 ${info.phone || '—'}</div>
+        <div class="profile-role" style="color:var(--text-muted); margin-bottom:0.4rem;">${info.role} · ${info.dept}</div>
+        <div style="font-size:0.85rem; color:var(--text-muted);">📧 ${info.email || '—'}</div>
+        <div style="font-size:0.85rem; color:var(--text-muted);">📞 ${info.phone || '—'}</div>
       </div>
     </div>
   `;
@@ -1457,7 +1628,7 @@ function priBadge(p){
 }
 
 // ══════════════════════════════════════════════
-// 📊 ENTERPRISE AUTOMATED DATA EXPORT ENGINE
+// 📊 EXCEL EXPORT ENGINE
 // ══════════════════════════════════════════════
 function exportLedgerToExcel() {
   if (!tickets || !tickets.length) {
@@ -1579,7 +1750,18 @@ window.saveMachineFromTool = saveMachineFromTool;
 window.deleteConfiguredMachine = deleteConfiguredMachine;
 window.openCostDetailsModal = openCostDetailsModal;
 window.renderCostModalTable = renderCostModalTable;
+window.applyCostAnalyticsDateFilter = applyCostAnalyticsDateFilter;
+window.resetCostAnalyticsDateFilter = resetCostAnalyticsDateFilter;
+window.applyCostModalDateFilter = applyCostModalDateFilter;
+window.resetCostModalDateFilter = resetCostModalDateFilter;
+window.openDowntimeDetailsModal = openDowntimeDetailsModal;
+window.renderDowntimeModalTable = renderDowntimeModalTable;
+window.applyAnalyticsDateFilter = applyAnalyticsDateFilter;
+window.resetAnalyticsDateFilter = resetAnalyticsDateFilter;
+window.applyDowntimeModalDateFilter = applyDowntimeModalDateFilter;
+window.resetDowntimeModalDateFilter = resetDowntimeModalDateFilter;
 window.saveSystemUser = saveSystemUser;
 window.editSystemUser = editSystemUser;
 window.clearUserForm = clearUserForm;
 window.deleteSystemUser = deleteSystemUser;
+window.toggleMobileSidebar = toggleMobileSidebar;
