@@ -1,25 +1,48 @@
 <div class="page active" id="page-login">
   <div class="login-card">
     <div class="login-brand">
-      <div class="logo-icon">
-        <img src="https://i.tracxn.com/logo/company/Screenshot_from_2024-10-10_15-18-32_ecae2dce-fc36-4207-9635-56b4fc9ac871.png" alt="img-logo">
+      <!-- 🖼️ Dedicated custom logo image container -->
+      <div class="logo-img-wrapper">
+        <img src="/assets/itsmLogo.png" alt="Company Logo" onerror="this.src='https://i.tracxn.com/logo/company/Screenshot_from_2024-10-10_15-18-32_ecae2dce-fc36-4207-9635-56b4fc9ac871.png'" />
       </div>
-      <h1>Khetan Packfine PVT LTD</h1>
-      <p>Machine Maintenance Tracking Portal</p>
+      <h1>KPPL Maintenance</h1>
+      <p>Industrial Plant Maintenance &amp; Ticketing Engine</p>
     </div>
+    
     <div class="login-tabs">
-      <button class="login-tab active" onclick="switchLoginTab('user')">User Login</button>
-      <button class="login-tab" onclick="switchLoginTab('admin')">Admin Login</button>
+      <button class="login-tab active" onclick="switchLoginTab('user')">User Portal</button>
+      <button class="login-tab" onclick="switchLoginTab('admin')">Admin Panel</button>
     </div>
+    
+    <!-- User Login Form -->
     <div id="login-form-user">
-      <div class="form-group"><label>Username</label><input type="text" id="user-username" placeholder="Enter Username"/></div>
-      <div class="form-group"><label>Password</label><input type="password" id="user-password" placeholder="••••••••"/></div>
-      <button class="btn btn-primary" id="btn-login-user" onclick="doLogin('user')">Sign In as User</button>
+      <div class="form-group">
+        <label>Operator Username</label>
+        <input type="text" id="user-username" placeholder="Enter username" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="user-password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn btn-primary" id="btn-login-user" onclick="doLogin('user')" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
+        Sign In as Operator
+      </button>
     </div>
-    <div id="login-form-admin" style="display:none">
-      <div class="form-group"><label>Admin Username</label><input type="text" id="admin-username" placeholder="admin"/></div>
-      <div class="form-group"><label>Password</label><input type="password" id="admin-password" placeholder="••••••••"/></div>
-      <button class="btn btn-primary" id="btn-login-admin" onclick="doLogin('admin')">Sign In as Admin</button>
+
+    <!-- Admin Login Form -->
+    <div id="login-form-admin" style="display: none;">
+      <div class="form-group">
+        <label>Admin Username</label>
+        <input type="text" id="admin-username" placeholder="Enter admin username" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label>Admin Password</label>
+        <input type="password" id="admin-password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <button class="btn btn-primary" id="btn-login-admin" onclick="doLogin('admin')" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
+        Sign In as Administrator
+      </button>
     </div>
-    </div>
+
+  </div>
 </div>
